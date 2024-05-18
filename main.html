@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <link href="main.css" rel="stylesheet" type="text/css" />
+  <meta charset="UTF-8" />
+  <meta content="initial-scale=1,width=device-width" name="viewport" />
+  <script defer src="main.js" type="module"></script>
+  <title>Twitter画像ダウンローダー</title>
+</head>
+
+<body>
+  <header>
+    <h1>Twitter画像ダウンローダー</h1>
+  </header>
+
+  <main>
+    <div id="control">
+      <fieldset>
+        <label for="source-file">JSファイル</label>
+        <input accept="text/javascript" id="source-file" type="file" />
+      </fieldset>
+      <fieldset class="fit-content">
+        <button disabled id="begin-download">開始</button>
+        <button disabled id="cancel-download">キャンセル</button>
+      </fieldset>
+      <p>
+        <button data-modal-for="config">設定</button>
+      </p>
+    </div>
+
+    <div id="panes">
+      <webview disablewebsecurity id="webview" nodeintegration preload="preload.js" src="https://twitter.com/home"></webview>
+      <div class="hidden" id="right-pane">
+        <p class="tooltip">
+          <span class="tooltip-text"></span>
+          <label for="progress">進捗</label>
+          <progress id="progress"></progress>
+          <span id="percent"></span>
+        </p>
+        <textarea id="status" readonly></textarea>
+      </div>
+    </div>
+
+    <div class="modal-container">
+      <dialog class="modal" id="config">
+        <div class="modal-title">
+          <span>設定</span>
+          <span class="close">❎</span>
+        </div>
+
+        <div class="grid-rows modal-content">
+          <div>
+            <label for="destination-directory">保存先</label>
+            <input data-config-at="destinationDirectory" id="destination-directory" readonly type="text" />
+            <button data-opendir-for="destination-directory">参照</button>
+          </div>
+
+          <fieldset>
+            <legend>日付範囲</legend>
+            <span>
+              <label for="since">開始日時</label>
+              <input data-config-at="range.since" id="since" type="date" />
+            </span>
+            <span>
+              <label for="until">終了日時</label>
+              <input data-config-at="range.until" id="until" type="date" />
+            </span>
+          </fieldset>
+
+          <fieldset>
+            <legend>タイマー</legend>
+            <p>
+              <span>
+                <label for="initial-delay">初回待機</label>
+                <input data-config-at="timer.initialDelay" id="initial-delay" min="100" type="number" />
+              </span>
+              <span>
+                <label for="timeout">タイムアウト</label>
+                <input data-config-at="timer.timeout" id="timeout" min="500" step="10" type="number" />
+              </span>
+              <span>
+                <label for="period">処理間隔</label>
+                <input data-config-at="timer.period" id="period" max="500" min="80" step="5" type="number" />
+              </span>
+            </p>
+            <p>
+              <span class="sm">画像へのリンクが存在するか判定するまでの待機時間を<u>ミリ秒</u>単位で指定します</span>
+            </p>
+            <canvas id="timer-view"></canvas>
+          </fieldset>
+
+          <fieldset>
+            <legend>Twitter</legend>
+            <p>
+              <span>
+                <label for="webview-height">ウィンドウの高さ</label>
+                <input data-config-at="webView.size.height" id="webview-height" max="3072" min="554" step="1" type="number" />
+                <span>ピクセル</span>
+              </span>
+            </p>
+            <p>
+              <span>
+                <input data-config-at="webView.audioMuted" id="webview-audio-muted" type="checkbox" />
+                <label for="webview-audio-muted">音声ミュート</label>
+              </span>
+            </p>
+          </fieldset>
+
+        </div>
+      </dialog>
+    </div>
+  </main>
+
+  <footer id="footer">
+    <span class="sm" id="left-status"></span>
+    <span class="sm" id="center-status"></span>
+    <span class="sm" id="right-status"></span>
+  </footer>
+
+</body>
+
+</html>

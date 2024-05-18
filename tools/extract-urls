@@ -1,0 +1,7 @@
+#!/bin/sh
+tail -c+36 $1 \
+  | jq \
+    -M \
+    '.[].dmConversation.messages[].messageCreate.urls|map(.expanded)|join(",")' \
+  | sort -u \
+  | sed -r 's#"##g'

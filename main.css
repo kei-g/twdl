@@ -1,0 +1,235 @@
+@import url('https://fonts.cdnfonts.com/css/cascadia-mono');
+
+:root {
+  --background-color: 11, 11, 11;
+  --body-background-color: 67, 71, 67;
+  --status-bar-color: 17, 19, 11;
+  --text-color: 224, 224, 224;
+  --title-bar-color: 128, 168, 240;
+}
+
+.fit-content {
+  width: fit-content;
+}
+
+.grid-rows {
+  display: grid;
+  gap: 1em;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+.modal-container {
+  background-color: rgba(#000, .75);
+  display: none;
+  height: 100%;
+  left: 0;
+  overflow: auto;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 11;
+}
+
+.modal {
+  border: 1px solid rgba(var(--text-color), .125);
+  bottom: 0;
+  box-shadow: 12px 12px 12px 0 rgba(var(--background-color), .75);
+  font-family: 'Cascadia Mono', monospace;
+  left: 50%;
+  margin: 30px 20px;
+  padding: 0;
+  position: relative;
+  right: 0;
+  top: 0;
+  z-index: 12;
+}
+
+.modal-content {
+  background-color: rgb(var(--body-background-color));
+  color: rgb(var(--text-color));
+  margin: 0;
+  padding: 1em;
+}
+
+.modal-title {
+  align-items: baseline;
+  background-color: rgb(var(--title-bar-color));
+  color: rgb(var(--background-color));
+  display: grid;
+  margin: 0;
+  padding: 0;
+}
+
+.modal-title>* {
+  grid-row: 1;
+}
+
+.modal-title>:first-child {
+  margin: 4px;
+}
+
+.modal-title>.close {
+  -webkit-user-select: none;
+  cursor: pointer;
+  justify-self: right;
+  margin: 4px;
+  pointer-events: all;
+  user-select: none;
+}
+
+.none {
+  display: none;
+}
+
+.sm {
+  font-size: 9pt;
+}
+
+.tooltip {
+  cursor: pointer;
+  position: relative;
+}
+
+.tooltip:hover .tooltip-text {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-text {
+  background: rgba(var(--background-color), .875);
+  border-radius: 3px;
+  bottom: -30px;
+  color: white;
+  display: inline-block;
+  font-size: 8pt;
+  left: 50%;
+  line-height: 1.3;
+  opacity: 0;
+  padding: 5px;
+  position: absolute;
+  transform: translateX(-50%);
+  transition: .3s ease-in;
+  visibility: hidden;
+  white-space: nowrap;
+}
+
+#control {
+  align-items: baseline;
+  display: grid;
+  gap: 2em;
+}
+
+#control>* {
+  grid-row: 1;
+}
+
+#control>:last-child {
+  justify-self: right;
+}
+
+#initial-delay,
+#period {
+  width: 5em;
+}
+
+#panes {
+  display: grid;
+  gap: 1ex;
+  grid-template-columns: 848px 1fr;
+}
+
+#percent::after {
+  content: '%';
+}
+
+#right-pane {
+  display: grid;
+  gap: 1ex;
+  grid-template-columns: auto;
+  grid-template-rows: 2rem auto;
+}
+
+#timeout {
+  width: 6em;
+}
+
+#timer-view {
+  height: 64px;
+  width: 100%;
+}
+
+#webview-height {
+  width: 5em;
+}
+
+body,
+footer,
+h1,
+header,
+html,
+main {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: rgb(var(--body-background-color));
+  color: rgb(var(--text-color));
+  font-family: 'Cascadia Mono', monospace;
+}
+
+details {
+  margin: 1em 0;
+}
+
+footer,
+header {
+  position: -webkit-sticky;
+  position: sticky;
+  z-index: 1;
+}
+
+footer {
+  align-items: center;
+  background-color: rgba(var(--status-bar-color), .875);
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  height: 22px;
+}
+
+h1 {
+  font-size: 17pt;
+}
+
+header {
+  align-items: baseline;
+  background-color: rgba(var(--background-color), .875);
+  box-shadow: 0 12px 12px 0 rgba(var(--background-color), .75);
+  display: grid;
+  height: fit-content;
+  padding: 1ex 1rem;
+  top: 0;
+}
+
+label,
+summary {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+main {
+  display: grid;
+  gap: 1em;
+  grid-template-columns: auto;
+  padding: 1em;
+}
+
+webview {
+  display: inline-flex;
+  min-height: 554px;
+  width: 100%;
+}

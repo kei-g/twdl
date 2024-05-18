@@ -3,28 +3,43 @@
     "email": "km.8k6ce+github@gmail.com",
     "name": "kei-g"
   },
+  "build": {
+    "productName": "twdl"
+  },
   "description": "Twitter images downloader",
   "devDependencies": {
     "@types/node": "^20.12.12",
-    "@vercel/ncc": "^0.38.1",
+    "electron": "^30.0.6",
+    "electron-builder": "^24.13.3",
     "npm-run-all": "^4.1.5",
-    "puppeteer": "^22.9.0",
-    "rimraf": "^5.0.7",
-    "typescript": "^5.4.5"
+    "rimraf": "^5.0.7"
   },
   "license": "BSD-3-Clause",
-  "main": "dist/index.js",
+  "main": "index.js",
   "name": "@kei-g/twdl",
   "private": true,
   "publishConfig": {
     "access": "restricted"
   },
   "scripts": {
-    "build": "ncc build src/main.ts --external=puppeteer --target=es2022 -m -o dist",
+    "archive": "cd dist && mv win-unpacked twdl && zip -9r twdl.zip twdl && mv twdl win-unpacked",
+    "build": "npm-run-all -s build:icon -p build:app:*",
+    "build:app:linux": "electron-builder build --dir --linux --x64",
+    "build:app:win64": "npm-run-all -p build:app:win64:build download:rcedit -s build:app:win64:rcedit",
+    "build:app:win64:build": "electron-builder build --dir --win --x64 2>&1 | head -n3 || true",
+    "build:app:win64:rcedit": "wine64 tools/rcedit-x64.exe dist/win-unpacked/twdl.exe --set-version-string FileDescription 'Twitterの画像を一括ダウンロードします' --set-version-string ProductName 'Twitter Images Downloader' --set-version-string LegalCopyright 'Copyright © 2024 kei-g' --set-file-version $(tools/version.mjs --file) --set-product-version $(tools/version.mjs --product) --set-version-string InternalName twdl --set-version-string OriginalFilename twdl.exe --set-version-string CompanyName kei-g --set-icon dist/.icon-ico/icon.ico && sleep 1",
+    "build:icon": "npm-run-all -p build:prepare-icon:* -p build:icon:*",
+    "build:icon:32": "magick dist/twdl.png -resize 32x32 -strip dist/32.png",
+    "build:icon:48": "magick dist/twdl.png -resize 48x48 -strip dist/48.png",
+    "build:icon:96": "magick dist/twdl.png -resize 96x96 -strip dist/96.png",
+    "build:icon:256": "magick dist/twdl.png -resize 256x256 -strip dist/256.png",
+    "build:icon:ico": "tools/mkdir.mjs dist/.icon-ico && magick dist/twdl.png -resize 32x32 -strip dist/.icon-ico/icon.ico",
+    "build:prepare-icon:dist": "tools/mkdir.mjs dist",
+    "build:prepare-icon:png-from-svg": "inkscape --export-filename=dist/twdl.png --export-overwrite --export-type=png images/twdl.svg && sleep 1",
     "clean": "rimraf dist/",
+    "download:rcedit": "test -f tools/rcedit-x64.exe || curl -Ls -o tools/rcedit-x64.exe https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe",
     "prebuild": "run-s clean",
-    "start": "ncc run src/main.ts"
+    "start": "electron main.js"
   },
-  "type": "module",
   "version": "1.0.0"
 }
