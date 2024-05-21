@@ -1,0 +1,36 @@
+jobs:
+  github:
+    name: Create a release on GitHub
+    runs-on: ubuntu-latest
+    steps:
+      - id: cache
+        name: Restore from cache
+        uses: actions/cache/restore@v4
+        with:
+          key: ${{ github.sha }}
+          path: |
+            app/dist
+      - if: ${{ steps.cache.outputs.cache-hit == 'true' }}
+        name: Archive to release
+        run: |
+          cd app/dist
+          mkdir linux
+          mv linux-unpacked linux/twdl-${{ github.ref_name }}
+          mv win-unpacked twdl-${{ github.ref_name }}
+          tar -C linux -cf - . | xz -9cevz > ../../twdl-${{ github.ref_name }}.tar.xz &
+          zip -9r ../../twdl-${{ github.ref_name }}.zip twdl-${{ github.ref_name }} &
+          wait
+      - if: ${{ steps.cache.outputs.cache-hit == 'true' }}
+        name: Create a release
+        uses: kei-g/github/create-release@main
+        with:
+          assets: |
+            twdl-${{ github.ref_name }}.tar.xz as application/x-xz
+            twdl-${{ github.ref_name }}.zip as application/zip
+          checkout: false
+name: Release
+on:
+  push:
+    tags:
+      - 'v[0-9]+\.[0-9]+\.[0-9]+'
+      - 'v[0-9]+\.[0-9]+'
