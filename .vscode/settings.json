@@ -6,11 +6,13 @@
   "cSpell.enabled": true,
   "cSpell.words": [
     "asar",
+    "bento",
     "favorited",
     "magick",
     "maximizable",
     "outfile",
     "rcedit",
+    "tada",
     "testid",
     "twdl",
     "twimg",
@@ -31,6 +33,7 @@
   "html.format.wrapLineLength": 0,
   "markdownlint.config": {
     "MD009": false,
+    "MD034": false,
   },
   "codemetrics.nodeconfiguration.BreakStatement": 0,
   "codemetrics.nodeconfiguration.CaseClause": 0,

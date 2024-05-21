@@ -1,0 +1,76 @@
+jobs:
+  build:
+    name: Build on Node.js ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - 22
+    steps:
+      - name: Purge firefox
+        run: |
+          sudo apt-get purge --autoremove \
+            firefox
+      - name: Update packages list
+        run: |
+          sudo apt-get update --yes
+      - name: Upgrade installed packages
+        run: |
+          sudo apt-get upgrade --yes
+      - name: Install dependent packegs
+        run: |
+          sudo apt-get install --yes \
+            fonts-cascadia-code \
+            imagemagick \
+            inkscape \
+            winetricks
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          submodules: true
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          run_install: false
+          version: 9
+      - id: pnpm-store
+        name: Get pnpm store directory
+        run: |
+          echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ${{ steps.pnpm-store.outputs.path}}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Setup node modules
+        run: |
+          pnpm install
+      - name: Build
+        run: |
+          npm run build
+      - if: ${{ github.event_name == 'push' && github.ref_name == 'main' && matrix.node == 22 }}
+        name: Cache
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ github.sha }}
+          path: |
+            app/dist
+name: Build
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
