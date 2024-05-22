@@ -46,7 +46,12 @@ ipcRenderer.on(
       return ipcRenderer.sendToHost('images-found', { retryLater: true }, ...args)
     const articles = main.querySelectorAll('article')
     const images = { size: 0 }
-    if (articles.length)
+    if (articles.length) {
+      const notices = articles.item(0).querySelectorAll('span:has(>span)+a[href="https://help.twitter.com/rules-and-policies/notices-on-twitter"][role="link"][target="_blank"]')
+      if (notices.length) {
+        const error = accumulateTextContents(notices.item(0).parentElement.children.item(0).querySelectorAll('span')).join(',')
+        return ipcRenderer.sendToHost('images-found', { error }, ...args)
+      }
       articles.item(0).querySelectorAll('[src^="https://pbs.twimg.com/media/"]').forEach(
         element => {
           const src = element.getAttribute('src')
@@ -62,6 +67,7 @@ ipcRenderer.on(
           }
         }
       )
+    }
     ipcRenderer.sendToHost('images-found', images, ...args)
   }
 )
