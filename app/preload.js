@@ -1,5 +1,15 @@
 const { ipcRenderer } = require('electron')
 
+const accumulateTextContents = nodes => {
+  const list = []
+  nodes.forEach(
+    element => element.childElementCount === 0 && element.childNodes.forEach(
+      node => list.push(node.textContent)
+    )
+  )
+  return list
+}
+
 ipcRenderer.on(
   'download',
   async (_, { channel, url }) => {
@@ -20,6 +30,11 @@ ipcRenderer.on(
     const failure = document.querySelector('div#ScriptLoadFailure:has(>form)')
     if (failure)
       return ipcRenderer.sendToHost('images-found', { abort: true, error: 'スクリプト読み込みエラー' }, ...args)
+    const errorDetail = document.querySelector('[data-testid="error-detail"]')
+    if (errorDetail) {
+      const error = accumulateTextContents(errorDetail.querySelectorAll('div>span:first-child span')).join(',')
+      return ipcRenderer.sendToHost('images-found', { error }, ...args)
+    }
     const toast = document.querySelector('[data-testid="toast"]')
     if (toast?.innerText === 'そのポストは削除されました。')
       return ipcRenderer.sendToHost('images-found', { error: toast.innerText }, ...args)
