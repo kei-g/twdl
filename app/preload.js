@@ -5,13 +5,12 @@ ipcRenderer.on(
   async (_, { channel, url }) => {
     const res = await window.fetch(url)
     const { status, statusText } = res
+    const result = { status, statusText, url }
     if (status === 200) {
       const blob = await res.blob()
-      const data = new Uint8Array(await blob.arrayBuffer())
-      ipcRenderer.sendToHost(channel, { data, status, statusText, url })
+      result.data = new Uint8Array(await blob.arrayBuffer())
     }
-    else
-      ipcRenderer.sendToHost(channel, { status, statusText, url })
+    ipcRenderer.sendToHost(channel, result)
   }
 )
 
