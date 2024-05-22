@@ -12,6 +12,17 @@ class MainWindow extends BrowserWindow {
     return Promise.resolve(this.#config)
   }
 
+  #openDirectory() {
+    return dialog.showOpenDialog(
+      this,
+      {
+        properties: [
+          'openDirectory',
+        ],
+      }
+    )
+  }
+
   async #setConfig(_, config) {
     this.#config = config
     await this.#writeConfig()
@@ -52,6 +63,7 @@ class MainWindow extends BrowserWindow {
     this.#config = config
     this.#configPath = configPath
     ipcMain.handle('get-config', this.#getConfig.bind(this))
+    ipcMain.handle('open-directory', this.#openDirectory.bind(this))
     ipcMain.handle('set-config', this.#setConfig.bind(this))
   }
 
@@ -102,17 +114,6 @@ const initializeApplication = async () => {
   ipcMain.handle(
     'download',
     async (_, text) => await lookup(text, webContents)
-  )
-  ipcMain.handle(
-    'open-directory',
-    () => dialog.showOpenDialog(
-      mainWindow,
-      {
-        properties: [
-          'openDirectory',
-        ],
-      }
-    )
   )
   await mainWindow.loadFile('main.html')
   if (config.developmentMode)
