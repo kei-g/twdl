@@ -81,6 +81,33 @@ class Preload {
           }
         }
       )
+      articles.item(0).querySelectorAll('div[data-testid="tweetPhoto"] div[data-testid="videoComponent"] video').forEach(
+        video => {
+          const [label, poster, src, type] = ['aria-label', 'poster', 'src', 'type'].map(video.getAttribute.bind(video))
+          const m = src.match(/^(?<prefix>https:\/\/video\.twimg\.com\/tweet_video\/)(?<id>[^.]+)\.(?<format>.+)$/)
+          if (m) {
+            const { format, id, prefix } = m.groups
+            const matched = m[0]
+            const name = `${id}.${format}`
+            const url = matched
+            if (!(name in images)) {
+              images[name] = { label, matched, poster, prefix, type, url }
+              images.size++
+            }
+          }
+          const t = poster?.match(/^(?<prefix>https:\/\/pbs\.twimg\.com\/[^/]+)\/(?<id>[^.]+)\.(?<format>.+)$/)
+          if (t) {
+            const { format, id, prefix } = t.groups
+            const matched = t[0]
+            const name = `${id}.${format}`
+            const url = matched
+            if (!(name in images)) {
+              images[name] = { label, matched, poster, prefix, url }
+              images.size++
+            }
+          }
+        }
+      )
     }
     ipcRenderer.sendToHost('images-found', images, ...args)
   }
