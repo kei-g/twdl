@@ -24,24 +24,24 @@ class Application {
     ([2, 3].includes(event.level) ? [console.warn, console.error][event.level - 2] : console.log)(event.message)
   }
 
-  #handleIpcMessage(event) {
-    if (event.channel === 'images-found') {
-      const [images, { epoch, period, timeout }] = event.args
-      const now = Date.now()
-      if (epoch + timeout <= now)
-        ipcRenderer.send('images-found', { abort: false, error: 'タイムアウト' })
-      else if (images.error && !images.retryLater)
-        ipcRenderer.send('images-found', images)
-      else if (images.retryLater || images.size === 0) {
-        if (images.error)
-          console.error(images.error)
-        this.#requestLookupImages(epoch, period, timeout, period)
-      }
-      else
-        ipcRenderer.send('images-found', images)
+  #handleFoundImages(event) {
+    const [images, { epoch, period, timeout }] = event.args
+    const now = Date.now()
+    if (epoch + timeout <= now)
+      ipcRenderer.send('images-found', { abort: false, error: 'タイムアウト' })
+    else {
+      if (images.error)
+        console.error(images.error)
+      images.retryLater || images.size === 0
+        ? this.#requestLookupImages(epoch, period, timeout, period)
+        : ipcRenderer.send('images-found', images)
     }
-    else
-      ipcRenderer.send(event.channel, ...event.args)
+  }
+
+  #handleIpcMessage(event) {
+    event.channel === 'images-found'
+      ? this.#handleFoundImages(event)
+      : ipcRenderer.send(event.channel, ...event.args)
   }
 
   async #initializeComponents() {
