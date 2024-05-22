@@ -20,6 +20,10 @@ class Application {
     return this.#window.document.getElementById(id)
   }
 
+  #handleConsoleMessage(event) {
+    ([2, 3].includes(event.level) ? [console.warn, console.error][event.level - 2] : console.log)(event.message)
+  }
+
   async #initializeComponents() {
     const config = await ipcRenderer.invoke('get-config')
     const audioMuted = config.webView?.audioMuted ?? true
@@ -32,7 +36,7 @@ class Application {
       webView.addEventListener('dom-ready', this.#openDevTools.bind(this), { once: true })
     webView.style.height = `${webViewHeight}px`
     webView.setAudioMuted(audioMuted)
-    webView.addEventListener('console-message', handleConsoleMessage)
+    webView.addEventListener('console-message', this.#handleConsoleMessage.bind(this))
     webView.addEventListener('ipc-message', handleIpcMessage)
     this.#getElementById('destination-directory').value = config.destinationDirectory
     if (config.range?.since)
@@ -64,8 +68,6 @@ class Application {
     window.addEventListener('DOMContentLoaded', this.#initializeComponents.bind(this))
   }
 }
-
-const handleConsoleMessage = e => ([2, 3].includes(e.level) ? [console.warn, console.error][e.level - 2] : console.log)(e.message)
 
 const handleIpcMessage = e => {
   if (e.channel === 'images-found') {
