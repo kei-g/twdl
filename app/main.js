@@ -1,5 +1,70 @@
 const { ipcRenderer } = require('electron')
 
+class Application {
+  #controls = {
+    webViewAudioMuted: undefined,
+    webViewHeight: undefined,
+  }
+  #webView = undefined
+  #window = undefined
+
+  #changeWebViewAudioMuted() {
+    this.#webView.setAudioMuted(this.#controls.webViewAudioMuted.checked)
+  }
+
+  #changeWebViewHeight() {
+    this.#webView.style.height = `${this.#controls.webViewHeight.value}px`
+  }
+
+  #getElementById(id) {
+    return this.#window.document.getElementById(id)
+  }
+
+  async #initializeComponents() {
+    const config = await ipcRenderer.invoke('get-config')
+    const audioMuted = config.webView?.audioMuted ?? true
+    const webViewHeight = config.webView?.size?.height ?? 554
+    const source = this.#getElementById('source-file')
+    source.addEventListener('change', invokeDownload.bind(this, source))
+    const webView = this.#getElementById('webview')
+    this.#webView = webView
+    if (config.webView?.openDevTools)
+      webView.addEventListener('dom-ready', this.#openDevTools.bind(this), { once: true })
+    webView.style.height = `${webViewHeight}px`
+    webView.setAudioMuted(audioMuted)
+    webView.addEventListener('console-message', handleConsoleMessage)
+    webView.addEventListener('ipc-message', handleIpcMessage)
+    this.#getElementById('destination-directory').value = config.destinationDirectory
+    if (config.range?.since)
+      this.#getElementById('since').value = config.range.since
+    if (config.range?.until)
+      this.#getElementById('until').value = config.range.until
+    this.#getElementById('initial-delay').value = config.timer?.initialDelay ?? 100
+    this.#getElementById('timeout').value = config.timer?.timeout ?? 5000
+    this.#getElementById('period').value = config.timer?.period ?? 125
+    const wh = this.#getElementById('webview-height')
+    this.#controls.webViewHeight = wh
+    wh.addEventListener('change', this.#changeWebViewHeight.bind(this))
+    wh.value = webViewHeight
+    const wam = this.#getElementById('webview-audio-muted')
+    this.#controls.webViewAudioMuted = wam
+    wam.addEventListener('change', this.#changeWebViewAudioMuted.bind(this))
+    wam.checked = audioMuted
+    observeConfigurationChanges()
+    prepareModalControllers()
+    prepareOpenDirectory()
+  }
+
+  #openDevTools() {
+    this.#webView.openDevTools()
+  }
+
+  attachTo(window) {
+    this.#window = window
+    window.addEventListener('DOMContentLoaded', this.#initializeComponents.bind(this))
+  }
+}
+
 const handleConsoleMessage = e => ([2, 3].includes(e.level) ? [console.warn, console.error][e.level - 2] : console.log)(e.message)
 
 const handleIpcMessage = e => {
@@ -27,44 +92,6 @@ const handleIpcMessage = e => {
   }
   else
     ipcRenderer.send(e.channel, ...e.args)
-}
-
-const initializeComponents = async () => {
-  const config = await ipcRenderer.invoke('get-config')
-  const audioMuted = config.webView?.audioMuted ?? true
-  const webViewHeight = config.webView?.size?.height ?? 554
-  const source = document.getElementById('source-file')
-  source.addEventListener('change', invokeDownload.bind(this, source))
-  const webView = document.getElementById('webview')
-  if (config.webView?.openDevTools)
-    webView.addEventListener('dom-ready', () => webView.openDevTools(), { once: true })
-  webView.style.height = `${webViewHeight}px`
-  webView.setAudioMuted(audioMuted)
-  webView.addEventListener('console-message', handleConsoleMessage)
-  webView.addEventListener('ipc-message', handleIpcMessage)
-  document.getElementById('destination-directory').value = config.destinationDirectory
-  if (config.range?.since)
-    document.getElementById('since').value = config.range.since
-  if (config.range?.until)
-    document.getElementById('until').value = config.range.until
-  document.getElementById('initial-delay').value = config.timer?.initialDelay ?? 100
-  document.getElementById('timeout').value = config.timer?.timeout ?? 5000
-  document.getElementById('period').value = config.timer?.period ?? 125
-  const wh = document.getElementById('webview-height')
-  wh.addEventListener(
-    'change',
-    () => webView.style.height = `${wh.value}px`
-  )
-  wh.value = webViewHeight
-  const wam = document.getElementById('webview-audio-muted')
-  wam.addEventListener(
-    'change',
-    () => webView.setAudioMuted(wam.checked)
-  )
-  wam.checked = audioMuted
-  observeConfigurationChanges()
-  prepareModalControllers()
-  prepareOpenDirectory()
 }
 
 const invokeDownload = async (source, _) => await Promise.all(
@@ -138,8 +165,6 @@ const prepareOpenDirectory = () => {
     )
 }
 
-window.addEventListener('DOMContentLoaded', initializeComponents)
-
 ipcRenderer.on(
   'count',
   (_, count) => {
@@ -198,3 +223,6 @@ ipcRenderer.on(
     status.scrollTop = status.scrollHeight
   }
 )
+
+const application = new Application()
+application.attachTo(window)
