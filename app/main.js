@@ -24,6 +24,36 @@ class Application {
     ([2, 3].includes(event.level) ? [console.warn, console.error][event.level - 2] : console.log)(event.message)
   }
 
+  #handleIpcMessage(event) {
+    if (event.channel === 'images-found') {
+      const [images, { epoch, period, timeout }] = event.args
+      const now = Date.now()
+      if (epoch + timeout <= now)
+        ipcRenderer.send('images-found', { abort: false, error: 'タイムアウト' })
+      else if (images.error && !images.retryLater)
+        ipcRenderer.send('images-found', images)
+      else if (images.retryLater || images.size === 0) {
+        if (images.error)
+          console.error(images.error)
+        this.#window.setTimeout(
+          () => this.#webView.send(
+            'lookup-images',
+            {
+              epoch,
+              period,
+              timeout
+            }
+          ),
+          period
+        )
+      }
+      else
+        ipcRenderer.send('images-found', images)
+    }
+    else
+      ipcRenderer.send(event.channel, ...event.args)
+  }
+
   async #initializeComponents() {
     const config = await ipcRenderer.invoke('get-config')
     const audioMuted = config.webView?.audioMuted ?? true
@@ -37,7 +67,7 @@ class Application {
     webView.style.height = `${webViewHeight}px`
     webView.setAudioMuted(audioMuted)
     webView.addEventListener('console-message', this.#handleConsoleMessage.bind(this))
-    webView.addEventListener('ipc-message', handleIpcMessage)
+    webView.addEventListener('ipc-message', this.#handleIpcMessage.bind(this))
     this.#getElementById('destination-directory').value = config.destinationDirectory
     if (config.range?.since)
       this.#getElementById('since').value = config.range.since
@@ -67,33 +97,6 @@ class Application {
     this.#window = window
     window.addEventListener('DOMContentLoaded', this.#initializeComponents.bind(this))
   }
-}
-
-const handleIpcMessage = e => {
-  if (e.channel === 'images-found') {
-    const [images, { epoch, period, timeout }] = e.args
-    const now = Date.now()
-    if (epoch + timeout <= now)
-      ipcRenderer.send('images-found', { abort: false, error: 'タイムアウト' })
-    else if (images.error)
-      ipcRenderer.send('images-found', images)
-    else if (images.retryLater || images.size === 0)
-      setTimeout(
-        () => document.getElementById('webview').send(
-          'lookup-images',
-          {
-            epoch,
-            period,
-            timeout
-          }
-        ),
-        period
-      )
-    else
-      ipcRenderer.send('images-found', images)
-  }
-  else
-    ipcRenderer.send(e.channel, ...e.args)
 }
 
 const invokeDownload = async (source, _) => await Promise.all(
