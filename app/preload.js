@@ -16,6 +16,36 @@ class Preload {
     const failure = this.#querySelector('div#ScriptLoadFailure:has(>form)')
     if (failure)
       return ipcRenderer.sendToHost('images-found', { abort: true, error: 'スクリプト読み込みエラー' }, ...args)
+    const mainRoles = this.#querySelectorAll('main[role="main"]')
+    switch (mainRoles.length) {
+      case 0:
+        return ipcRenderer.sendToHost('images-found', { error: '<main>がない', retryLater: true }, ...args)
+      case 1:
+        const main = mainRoles.item(0)
+        const primaries = main.querySelectorAll('div[data-testid="primaryColumn"]')
+        if (!primaries.length)
+          return ipcRenderer.sendToHost('images-found', { error: 'primaryColumnが無い', retryLater: true }, ...args)
+        const ctx = {}
+        primaries.forEach(
+          primaryColumn => {
+            if (ctx.error)
+              return
+            const cells = primaryColumn.querySelectorAll('div[data-testid="cellInnerDiv"]')
+            if (!cells.length) {
+              const progressbars = primaryColumn.querySelectorAll('div[role="progressbar"]:has(>div>svg>circle)')
+              if (progressbars.length) {
+                ctx.error = progressbars.item(0).ariaLabel
+                ctx.retryLater = true
+              }
+            }
+          }
+        )
+        if (ctx.error)
+          return ipcRenderer.sendToHost('images-found', ctx, ...args)
+        break
+      default:
+        return ipcRenderer.sendToHost('images-found', { error: '<main>が複数ある', retryLater: true }, ...args)
+    }
     const errorDetail = this.#querySelector('[data-testid="error-detail"]')
     if (errorDetail) {
       const error = accumulateTextContents(errorDetail.querySelectorAll('div>span:first-child span')).join(',')
@@ -24,9 +54,7 @@ class Preload {
     const toast = this.#querySelector('[data-testid="toast"]')
     if (toast?.innerText === 'そのポストは削除されました。')
       return ipcRenderer.sendToHost('images-found', { error: toast.innerText }, ...args)
-    const main = this.#querySelector('main[role="main"]')
-    if (!main)
-      return ipcRenderer.sendToHost('images-found', { error: '<main>タグが無い' }, ...args)
+    const main = mainRoles.item(0)
     const progressbars = main.querySelectorAll('div[aria-label][role="progressbar"]')
     if (progressbars.length)
       return ipcRenderer.sendToHost('images-found', { retryLater: true }, ...args)
