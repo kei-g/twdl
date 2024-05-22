@@ -4,6 +4,62 @@ const { appendFile, writeFile, readFile, stat } = require('node:fs/promises')
 const { cwd } = require('node:process')
 const { join: joinPath } = require('node:path')
 
+class MainWindow extends BrowserWindow {
+  #config = {}
+  #configPath = ''
+
+  #getConfig() {
+    return Promise.resolve(this.#config)
+  }
+
+  async #setConfig(_, config) {
+    this.#config = config
+    await this.#writeConfig()
+  }
+
+  async #writeConfig() {
+    await storeConfiguration(this.#configPath, undefined, this.#config)
+  }
+
+  constructor(config, configPath) {
+    super(
+      {
+        autoHideMenuBar: true,
+        frame: !config.window?.noFrame,
+        fullscreenable: false,
+        hasShadow: true,
+        height: 720,
+        maximizable: false,
+        resizable: false,
+        thickFrame: false,
+        titleBarOverlay: true,
+        transparent: false,
+        webPreferences: {
+          allowRunningInsecureContent: false,
+          contextIsolation: false,
+          defaultEncoding: 'UTF-8',
+          devTools: config.developmentMode,
+          disableHtmlFullscreenWindowResize: true,
+          experimentalFeatures: false,
+          nodeIntegration: true,
+          textAreasAreResizable: false,
+          webSecurity: true,
+          webviewTag: true,
+        },
+        width: 1440,
+      }
+    )
+    this.#config = config
+    this.#configPath = configPath
+    ipcMain.handle('get-config', this.#getConfig.bind(this))
+    ipcMain.handle('set-config', this.#setConfig.bind(this))
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.#writeConfig()
+  }
+}
+
 const accumulate = dm => {
   const messages = []
   const count = dm.reduce(
@@ -41,41 +97,11 @@ const fakeUserDataPath = () => {
 const initializeApplication = async () => {
   const path = joinPath(fakeUserDataPath(), 'twdl.json')
   const config = await loadConfigurationFileFrom(path)
-  const mainWindow = new BrowserWindow(
-    {
-      autoHideMenuBar: true,
-      frame: !config.window?.noFrame,
-      fullscreenable: false,
-      hasShadow: true,
-      height: 720,
-      maximizable: false,
-      resizable: false,
-      thickFrame: false,
-      titleBarOverlay: true,
-      transparent: false,
-      webPreferences: {
-        allowRunningInsecureContent: false,
-        contextIsolation: false,
-        defaultEncoding: 'UTF-8',
-        devTools: config.developmentMode,
-        disableHtmlFullscreenWindowResize: true,
-        experimentalFeatures: false,
-        nodeIntegration: true,
-        textAreasAreResizable: false,
-        webSecurity: true,
-        webviewTag: true,
-      },
-      width: 1440,
-    }
-  )
+  const mainWindow = new MainWindow(config, path)
   const { webContents } = mainWindow
   ipcMain.handle(
     'download',
     async (_, text) => await lookup(text, webContents)
-  )
-  ipcMain.handle(
-    'get-config',
-    () => Promise.resolve(config)
   )
   ipcMain.handle(
     'open-directory',
@@ -87,10 +113,6 @@ const initializeApplication = async () => {
         ],
       }
     )
-  )
-  ipcMain.handle(
-    'set-config',
-    storeConfiguration.bind(this, path)
   )
   await mainWindow.loadFile('main.html')
   if (config.developmentMode)
