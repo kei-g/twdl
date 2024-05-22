@@ -35,17 +35,7 @@ class Application {
       else if (images.retryLater || images.size === 0) {
         if (images.error)
           console.error(images.error)
-        this.#window.setTimeout(
-          () => this.#webView.send(
-            'lookup-images',
-            {
-              epoch,
-              period,
-              timeout
-            }
-          ),
-          period
-        )
+        this.#requestLookupImages(epoch, period, timeout, period)
       }
       else
         ipcRenderer.send('images-found', images)
@@ -87,10 +77,40 @@ class Application {
     observeConfigurationChanges()
     prepareModalControllers()
     prepareOpenDirectory()
+    ipcRenderer.on('load', this.#load.bind(this))
+  }
+
+  async #load(_, url) {
+    const epoch = Date.now()
+    const [initialDelay, period, timeout] = ['initial-delay', 'period', 'timeout'].map(
+      id => parseInt(this.#window.document.getElementById(id).value)
+    )
+    const webView = this.#webView
+    const task = new Promise(
+      resolve => webView.addEventListener('dom-ready', resolve, { once: true })
+    )
+    await webView.loadURL(url)
+    await task
+    this.#requestLookupImages(epoch, period, timeout, initialDelay)
   }
 
   #openDevTools() {
     this.#webView.openDevTools()
+  }
+
+  #requestLookupImages(epoch, period, timeout, delay) {
+    this.#window.setTimeout(
+      this.#webView.send.bind(
+        this.#webView,
+        'lookup-images',
+        {
+          epoch,
+          period,
+          timeout
+        }
+      ),
+      delay
+    )
   }
 
   attachTo(window) {
@@ -197,26 +217,6 @@ ipcRenderer.on(
     document.getElementById('percent').innerText = `${percent}`
     for (const tooltip of progress.parentElement.querySelectorAll('.tooltip-text'))
       tooltip.innerText = `${index}/${progress.max}`
-  }
-)
-
-ipcRenderer.on(
-  'load',
-  async (_, url) => {
-    const epoch = Date.now()
-    const [initialDelay, period, timeout] = ['initial-delay', 'period', 'timeout'].map(
-      id => parseInt(document.getElementById(id).value)
-    )
-    const webView = document.getElementById('webview')
-    const task = new Promise(
-      resolve => webView.addEventListener('dom-ready', resolve, { once: true })
-    )
-    await webView.loadURL(url)
-    await task
-    setTimeout(
-      () => webView.send('lookup-images', { epoch, period, timeout }),
-      initialDelay
-    )
   }
 )
 
