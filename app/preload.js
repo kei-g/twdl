@@ -15,12 +15,15 @@ class Preload {
     images.size = 0
     if (articles.length) {
       const notices = articles.item(0).querySelectorAll('span:has(>span)+a[href="https://help.twitter.com/rules-and-policies/notices-on-twitter"][role="link"][target="_blank"]')
-      notices.length
-        ? images.error = accumulateTextContents(notices.item(0).parentElement.children.item(0).querySelectorAll('span')).join(',')
-        : (
-          articles.item(0).querySelectorAll('[src^="https://pbs.twimg.com/media/"]').forEach(this.#handleImageElement.bind(this, images)),
-          articles.item(0).querySelectorAll('div[data-testid="tweetPhoto"] div[data-testid="videoComponent"] video').forEach(this.#handleVideoElement.bind(this, images))
-        )
+      if (notices.length) {
+        images.error = accumulateTextContents(notices.item(0).parentElement.children.item(0).querySelectorAll('span')).join(',')
+        delete images.retryLater
+        delete images.size
+      }
+      else {
+        articles.item(0).querySelectorAll('[src^="https://pbs.twimg.com/media/"]').forEach(this.#handleImageElement.bind(this, images))
+        articles.item(0).querySelectorAll('div[data-testid="tweetPhoto"] div[data-testid="videoComponent"] video').forEach(this.#handleVideoElement.bind(this, images))
+      }
     }
   }
 
@@ -71,8 +74,10 @@ class Preload {
             primaries.forEach(this.#handlePrimaryColumn.bind(this, ctx))
             if (!ctx.error) {
               const errorDetail = this.#querySelector('[data-testid="error-detail"]')
-              if (errorDetail)
+              if (errorDetail) {
                 ctx.error = accumulateTextContents(errorDetail.querySelectorAll('div>span:first-child span')).join(',')
+                delete ctx.retryLater
+              }
               else {
                 const toast = this.#querySelector('[data-testid="toast"]')
                 if (toast?.innerText === 'そのポストは削除されました。')
