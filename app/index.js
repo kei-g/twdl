@@ -123,9 +123,10 @@ const initializeApplication = async () => {
 const interpretUrl = url => {
   const matched = url.expanded.match(tweetUrlRE)
   if (matched) {
-    const { id, user } = matched.groups
+    const { id, prefix, user } = matched.groups
     url.id = id
     url.matched = matched[0]
+    url.prefix = prefix
     url.user = user
   }
   return url
@@ -231,7 +232,7 @@ const tryParseJSON = (text, alternateValue) => {
   }
 }
 
-const tweetUrlRE = /^https:\/\/(twitter|x)\.com\/(?<user>[^/]+)\/status\/(?<id>\d+)$/
+const tweetUrlRE = /^(?<prefix>https:\/\/(twitter|x)\.com\/)(?<user>[^/]+)\/status\/(?<id>\d+)$/
 
 const waitForEvent = eventName => new Promise(
   resolve => ipcMain.once(
