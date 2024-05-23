@@ -25,52 +25,67 @@ class Preload {
   }
 
   #handleLookupImagesRequest(_, ...args) {
-    if (this.#caught.length)
-      return ipcRenderer.sendToHost('images-found', { abort: true, error: this.#caught.splice(0).map(c => c.message).join(',') }, ...args)
-    const failure = this.#querySelector('div#ScriptLoadFailure:has(>form)')
-    if (failure)
-      return ipcRenderer.sendToHost('images-found', { abort: true, error: 'スクリプト読み込みエラー' }, ...args)
-    const mainRoles = this.#querySelectorAll('main[role="main"]')
-    switch (mainRoles.length) {
-      case 0:
-        return ipcRenderer.sendToHost('images-found', { error: '<main>がない', retryLater: true }, ...args)
-      case 1:
-        const main = mainRoles.item(0)
-        const primaries = main.querySelectorAll('div[data-testid="primaryColumn"]')
-        if (!primaries.length)
-          return ipcRenderer.sendToHost('images-found', { error: 'primaryColumnが無い', retryLater: true }, ...args)
-        const ctx = {}
-        primaries.forEach(this.#handlePrimaryColumn.bind(this, ctx))
-        if (ctx.error)
-          return ipcRenderer.sendToHost('images-found', ctx, ...args)
-        break
-      default:
-        return ipcRenderer.sendToHost('images-found', { error: '<main>が複数ある', retryLater: true }, ...args)
+    const ctx = {}
+    if (this.#caught.length) {
+      ctx.abort = true
+      ctx.error = this.#caught.splice(0).map(c => c.message).join(',')
     }
-    const errorDetail = this.#querySelector('[data-testid="error-detail"]')
-    if (errorDetail) {
-      const error = accumulateTextContents(errorDetail.querySelectorAll('div>span:first-child span')).join(',')
-      return ipcRenderer.sendToHost('images-found', { error }, ...args)
+    else {
+      const failure = this.#querySelector('div#ScriptLoadFailure:has(>form)')
+      if (failure) {
+        ctx.abort = true
+        ctx.error = 'スクリプト読み込みエラー'
+      }
+      else {
+        const mainRoles = this.#querySelectorAll('main[role="main"]')
+        if (mainRoles.length === 1) {
+          const main = mainRoles.item(0)
+          const primaries = main.querySelectorAll('div[data-testid="primaryColumn"]')
+          if (primaries.length) {
+            primaries.forEach(this.#handlePrimaryColumn.bind(this, ctx))
+            if (!ctx.error) {
+              const errorDetail = this.#querySelector('[data-testid="error-detail"]')
+              if (errorDetail)
+                ctx.error = accumulateTextContents(errorDetail.querySelectorAll('div>span:first-child span')).join(',')
+              else {
+                const toast = this.#querySelector('[data-testid="toast"]')
+                if (toast?.innerText === 'そのポストは削除されました。')
+                  ctx.error = toast.innerText
+                else {
+                  const progressbars = main.querySelectorAll('div[aria-label][role="progressbar"]')
+                  if (progressbars.length) {
+                    ctx.error = accumulateTextContents(progressbars.item(0).querySelectorAll('span')).join(',')
+                    ctx.retryLater = true
+                  }
+                  else {
+                    const articles = main.querySelectorAll('article')
+                    ctx.size = 0
+                    if (articles.length) {
+                      const notices = articles.item(0).querySelectorAll('span:has(>span)+a[href="https://help.twitter.com/rules-and-policies/notices-on-twitter"][role="link"][target="_blank"]')
+                      notices.length
+                        ? ctx.error = accumulateTextContents(notices.item(0).parentElement.children.item(0).querySelectorAll('span')).join(',')
+                        : (
+                          articles.item(0).querySelectorAll('[src^="https://pbs.twimg.com/media/"]').forEach(this.#handleImageElement.bind(this, ctx)),
+                          articles.item(0).querySelectorAll('div[data-testid="tweetPhoto"] div[data-testid="videoComponent"] video').forEach(this.#handleVideoElement.bind(this, ctx))
+                        )
+                    }
+                  }
+                }
+              }
+            }
+          }
+          else {
+            ctx.error = 'primaryColumnが無い'
+            ctx.retryLater = true
+          }
+        }
+        else {
+          ctx.error = `${mainRoles.length}個の<main>タグ`
+          ctx.retryLater = true
+        }
+      }
     }
-    const toast = this.#querySelector('[data-testid="toast"]')
-    if (toast?.innerText === 'そのポストは削除されました。')
-      return ipcRenderer.sendToHost('images-found', { error: toast.innerText }, ...args)
-    const main = mainRoles.item(0)
-    const progressbars = main.querySelectorAll('div[aria-label][role="progressbar"]')
-    if (progressbars.length)
-      return ipcRenderer.sendToHost('images-found', { retryLater: true }, ...args)
-    const articles = main.querySelectorAll('article')
-    const images = { size: 0 }
-    if (articles.length) {
-      const notices = articles.item(0).querySelectorAll('span:has(>span)+a[href="https://help.twitter.com/rules-and-policies/notices-on-twitter"][role="link"][target="_blank"]')
-      notices.length
-        ? images.error = accumulateTextContents(notices.item(0).parentElement.children.item(0).querySelectorAll('span')).join(',')
-        : (
-          articles.item(0).querySelectorAll('[src^="https://pbs.twimg.com/media/"]').forEach(this.#handleImageElement.bind(this, images)),
-          articles.item(0).querySelectorAll('div[data-testid="tweetPhoto"] div[data-testid="videoComponent"] video').forEach(this.#handleVideoElement.bind(this, images))
-        )
-    }
-    ipcRenderer.sendToHost('images-found', images, ...args)
+    ipcRenderer.sendToHost('images-found', ctx, ...args)
   }
 
   #handlePrimaryColumn(ctx, primaryColumn) {
