@@ -10,6 +10,18 @@ class Preload {
     console.error(`[preload] unhandled rejection: ${event.message}`)
   }
 
+  async #handleDownloadRequest(_, { channel, url }) {
+    const res = await this.#window.fetch(url)
+    const { status, statusText } = res
+    const result = { status, statusText, url }
+    if (status === 200) {
+      const blob = await res.blob()
+      result.data = new Uint8Array(await blob.arrayBuffer())
+      ipcRenderer.sendToHost(channel, result)
+    }
+    ipcRenderer.sendToHost(channel, result)
+  }
+
   #handleImageElement(images, element) {
     const src = element.getAttribute('src')
     for (const m of src.matchAll(twitterImageUrlRE)) {
@@ -136,6 +148,7 @@ class Preload {
   }
 
   constructor() {
+    ipcRenderer.on('download', this.#handleDownloadRequest.bind(this))
     ipcRenderer.on('lookup-images', this.#handleLookupImagesRequest.bind(this))
   }
 
@@ -154,20 +167,6 @@ const accumulateTextContents = nodes => {
   )
   return list
 }
-
-ipcRenderer.on(
-  'download',
-  async (_, { channel, url }) => {
-    const res = await window.fetch(url)
-    const { status, statusText } = res
-    const result = { status, statusText, url }
-    if (status === 200) {
-      const blob = await res.blob()
-      result.data = new Uint8Array(await blob.arrayBuffer())
-    }
-    ipcRenderer.sendToHost(channel, result)
-  }
-)
 
 const twitterImageUrlRE = /^(?<prefix>https:\/\/pbs\.twimg\.com\/media\/)(?<id>[^\?]+)\?format=(?<format>[^&]+)&?.*$/g
 
