@@ -63,12 +63,12 @@ class Preload {
     const images = { size: 0 }
     if (articles.length) {
       const notices = articles.item(0).querySelectorAll('span:has(>span)+a[href="https://help.twitter.com/rules-and-policies/notices-on-twitter"][role="link"][target="_blank"]')
-      if (notices.length) {
-        const error = accumulateTextContents(notices.item(0).parentElement.children.item(0).querySelectorAll('span')).join(',')
-        return ipcRenderer.sendToHost('images-found', { error }, ...args)
-      }
-      articles.item(0).querySelectorAll('[src^="https://pbs.twimg.com/media/"]').forEach(this.#handleImageElement.bind(this, images))
-      articles.item(0).querySelectorAll('div[data-testid="tweetPhoto"] div[data-testid="videoComponent"] video').forEach(this.#handleVideoElement.bind(this, images))
+      notices.length
+        ? images.error = accumulateTextContents(notices.item(0).parentElement.children.item(0).querySelectorAll('span')).join(',')
+        : (
+          articles.item(0).querySelectorAll('[src^="https://pbs.twimg.com/media/"]').forEach(this.#handleImageElement.bind(this, images)),
+          articles.item(0).querySelectorAll('div[data-testid="tweetPhoto"] div[data-testid="videoComponent"] video').forEach(this.#handleVideoElement.bind(this, images))
+        )
     }
     ipcRenderer.sendToHost('images-found', images, ...args)
   }
