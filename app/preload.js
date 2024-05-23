@@ -10,6 +10,20 @@ class Preload {
     console.error(`[preload] unhandled rejection: ${event.message}`)
   }
 
+  #handleArticles(images, main) {
+    const articles = main.querySelectorAll('article')
+    images.size = 0
+    if (articles.length) {
+      const notices = articles.item(0).querySelectorAll('span:has(>span)+a[href="https://help.twitter.com/rules-and-policies/notices-on-twitter"][role="link"][target="_blank"]')
+      notices.length
+        ? images.error = accumulateTextContents(notices.item(0).parentElement.children.item(0).querySelectorAll('span')).join(',')
+        : (
+          articles.item(0).querySelectorAll('[src^="https://pbs.twimg.com/media/"]').forEach(this.#handleImageElement.bind(this, images)),
+          articles.item(0).querySelectorAll('div[data-testid="tweetPhoto"] div[data-testid="videoComponent"] video').forEach(this.#handleVideoElement.bind(this, images))
+        )
+    }
+  }
+
   async #handleDownloadRequest(_, { channel, url }) {
     const res = await this.#window.fetch(url)
     const { status, statusText } = res
@@ -69,19 +83,8 @@ class Preload {
                     ctx.error = accumulateTextContents(progressbars.item(0).querySelectorAll('span')).join(',')
                     ctx.retryLater = true
                   }
-                  else {
-                    const articles = main.querySelectorAll('article')
-                    ctx.size = 0
-                    if (articles.length) {
-                      const notices = articles.item(0).querySelectorAll('span:has(>span)+a[href="https://help.twitter.com/rules-and-policies/notices-on-twitter"][role="link"][target="_blank"]')
-                      notices.length
-                        ? ctx.error = accumulateTextContents(notices.item(0).parentElement.children.item(0).querySelectorAll('span')).join(',')
-                        : (
-                          articles.item(0).querySelectorAll('[src^="https://pbs.twimg.com/media/"]').forEach(this.#handleImageElement.bind(this, ctx)),
-                          articles.item(0).querySelectorAll('div[data-testid="tweetPhoto"] div[data-testid="videoComponent"] video').forEach(this.#handleVideoElement.bind(this, ctx))
-                        )
-                    }
-                  }
+                  else
+                    this.#handleArticles(ctx, main)
                 }
               }
             }
