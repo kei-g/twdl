@@ -113,7 +113,7 @@ const initializeApplication = async () => {
   const { webContents } = mainWindow
   ipcMain.handle(
     'download',
-    async (_, text) => await lookup(text, webContents)
+    async (_, text) => await lookup(config, text, webContents)
   )
   await mainWindow.loadFile('main.html')
   if (config.developmentMode)
@@ -143,7 +143,7 @@ const describeMessage = (ctx, message, webContents) => {
   webContents.send('status', `${message.id} ${timestamp} ${message.urls.length}個のURL`)
 }
 
-const download = async (name, matched, url, webContents) => {
+const download = async (config, name, matched, url, webContents) => {
   webContents.send('status', url)
   const channel = `download:${Date.now()}:${Math.random()}`
   const task = waitForEvent(channel)
@@ -151,11 +151,11 @@ const download = async (name, matched, url, webContents) => {
   const [res] = await task
   const { data, status, statusText } = res
   if (status === 200)
-    await writeFile(joinPath(cwd(), name), data)
+    await writeFile(joinPath(config.destinationDirectory, name), data)
   else
     webContents.send('status', `エラーが発生しました, ${statusText}`)
   await appendFile(
-    joinPath(cwd(), 'error.csv'),
+    joinPath(config.destinationDirectory, 'error.csv'),
     `"${url}","${matched}",${status},"${statusText}"\r\n`
   )
 }
@@ -170,7 +170,7 @@ const loadConfigurationFileFrom = async path => {
   return config
 }
 
-const lookup = async (text, webContents) => {
+const lookup = async (config, text, webContents) => {
   const index = text.indexOf('[')
   const dm = JSON.parse(text.substring(index))
   const ctx = accumulate(dm)
@@ -188,7 +188,7 @@ const lookup = async (text, webContents) => {
       if (error) {
         webContents.send('status', error)
         await appendFile(
-          joinPath(cwd(), 'error.csv'),
+          joinPath(config.destinationDirectory, 'error.csv'),
           `"${origin}","${url}",-,"${error}"\r\n`
         )
         if (abort)
@@ -196,14 +196,14 @@ const lookup = async (text, webContents) => {
       }
       else {
         await appendFile(
-          joinPath(cwd(), 'error.csv'),
+          joinPath(config.destinationDirectory, 'error.csv'),
           `"${origin}","${url}",+,"${images.size}個の画像が見つかりました"\r\n`
         )
         for (const name in images) {
           if (name === 'size')
             continue
           const { matched, url } = images[name]
-          await download(name, matched, url, webContents)
+          await download(config, name, matched, url, webContents)
         }
       }
     }
