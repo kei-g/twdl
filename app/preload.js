@@ -93,7 +93,8 @@ class Preload {
           else {
             const progressbars = mainRole.querySelectorAll('div[aria-label][role="progressbar"]')
             if (progressbars.length) {
-              ctx.error = accumulateTextContents(progressbars.item(0).querySelectorAll('span')).join(',')
+              const bar = progressbars.item(0)
+              ctx.error = accumulateTextContents(bar.querySelectorAll('span')).join(',')
               ctx.errorAt = 'progressbar@2'
               ctx.retryLater = true
             }
@@ -115,7 +116,8 @@ class Preload {
       if (!cells.length) {
         const progressbars = primaryColumn.querySelectorAll('div[role="progressbar"]:has(>div>svg>circle)')
         if (progressbars.length) {
-          ctx.error = progressbars.item(0).ariaLabel
+          const progressbar = progressbars.item(0)
+          ctx.error = progressbar.ariaLabel
           ctx.errorAt = 'progressbar'
           ctx.retryLater = true
         }
