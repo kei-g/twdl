@@ -129,7 +129,7 @@ class Preload {
       for (const line of failure.innerHTML.replaceAll(/([^\n])</g, '$1\n<').split('\n'))
         console.log(`  ${line}`)
       ctx.abort = true
-      ctx.error = 'スクリプト読み込みエラー'
+      ctx.error = `たぶんアクセス制限;「${failure.innerText}」って書いてある`
       ctx.errorAt = 'ScriptLoadFailure'
     }
     else {
