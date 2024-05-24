@@ -86,7 +86,7 @@ class Preload {
         }
         else {
           const toast = reactRoot.querySelector('[data-testid="toast"]')
-          if (toast?.innerText === 'そのポストは削除されました。') {
+          if (toast) {
             ctx.error = toast.innerText
             ctx.errorAt = 'toast'
           }
