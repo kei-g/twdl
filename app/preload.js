@@ -126,6 +126,8 @@ class Preload {
   #handleReactRoot(ctx, reactRoot) {
     const failure = reactRoot.querySelector('div#ScriptLoadFailure:has(>form)')
     if (failure) {
+      for (const line of failure.innerHTML.replaceAll(/([^\n])</g, '$1\n<').split('\n'))
+        console.log(`  ${line}`)
       ctx.abort = true
       ctx.error = 'スクリプト読み込みエラー'
       ctx.errorAt = 'ScriptLoadFailure'
