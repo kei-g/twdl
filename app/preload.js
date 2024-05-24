@@ -60,49 +60,12 @@ class Preload {
       ctx.error = this.#caught.splice(0).map(c => c.message).join(',')
     }
     else {
-      const failure = this.#querySelector('div#ScriptLoadFailure:has(>form)')
-      if (failure) {
-        ctx.abort = true
-        ctx.error = 'スクリプト読み込みエラー'
-      }
+      const reactRoot = this.#window.document.querySelector('#react-root')
+      if (reactRoot)
+        this.#handleReactRoot(ctx, reactRoot)
       else {
-        const mainRoles = this.#querySelectorAll('main[role="main"]')
-        if (mainRoles.length === 1) {
-          const main = mainRoles.item(0)
-          const primaries = main.querySelectorAll('div[data-testid="primaryColumn"]')
-          if (primaries.length) {
-            primaries.forEach(this.#handlePrimaryColumn.bind(this, ctx))
-            if (!ctx.error) {
-              const errorDetail = this.#querySelector('[data-testid="error-detail"]')
-              if (errorDetail) {
-                ctx.error = accumulateTextContents(errorDetail.querySelectorAll('div>span:first-child span')).join(',')
-                delete ctx.retryLater
-              }
-              else {
-                const toast = this.#querySelector('[data-testid="toast"]')
-                if (toast?.innerText === 'そのポストは削除されました。')
-                  ctx.error = toast.innerText
-                else {
-                  const progressbars = main.querySelectorAll('div[aria-label][role="progressbar"]')
-                  if (progressbars.length) {
-                    ctx.error = accumulateTextContents(progressbars.item(0).querySelectorAll('span')).join(',')
-                    ctx.retryLater = true
-                  }
-                  else
-                    this.#handleArticles(ctx, main)
-                }
-              }
-            }
-          }
-          else {
-            ctx.error = 'primaryColumnが無い'
-            ctx.retryLater = true
-          }
-        }
-        else {
-          ctx.error = `${mainRoles.length}個の<main>タグ`
-          ctx.retryLater = true
-        }
+        ctx.error = 'react-rootが無い'
+        ctx.retryLater = true
       }
     }
     ipcRenderer.sendToHost('images-found', ctx, ...args)
@@ -117,6 +80,53 @@ class Preload {
           ctx.error = progressbars.item(0).ariaLabel
           ctx.retryLater = true
         }
+      }
+    }
+  }
+
+  #handleReactRoot(ctx, reactRoot) {
+    const failure = reactRoot.querySelector('div#ScriptLoadFailure:has(>form)')
+    if (failure) {
+      ctx.abort = true
+      ctx.error = 'スクリプト読み込みエラー'
+    }
+    else {
+      const mainRoles = reactRoot.querySelectorAll('main[role="main"]')
+      if (mainRoles.length === 1) {
+        const main = mainRoles.item(0)
+        const primaries = main.querySelectorAll('div[data-testid="primaryColumn"]')
+        if (primaries.length) {
+          primaries.forEach(this.#handlePrimaryColumn.bind(this, ctx))
+          if (!ctx.error) {
+            const errorDetail = reactRoot.querySelector('[data-testid="error-detail"]')
+            if (errorDetail) {
+              ctx.error = accumulateTextContents(errorDetail.querySelectorAll('div>span:first-child span')).join(',')
+              delete ctx.retryLater
+            }
+            else {
+              const toast = reactRoot.querySelector('[data-testid="toast"]')
+              if (toast?.innerText === 'そのポストは削除されました。')
+                ctx.error = toast.innerText
+              else {
+                const progressbars = main.querySelectorAll('div[aria-label][role="progressbar"]')
+                if (progressbars.length) {
+                  ctx.error = accumulateTextContents(progressbars.item(0).querySelectorAll('span')).join(',')
+                  ctx.retryLater = true
+                }
+                else
+                  this.#handleArticles(ctx, main)
+              }
+            }
+          }
+        }
+        else {
+          ctx.error = 'primaryColumnが無い'
+          ctx.retryLater = true
+        }
+      }
+      else {
+        ctx.error = `${mainRoles.length}個の<main>タグ`
+        ctx.retryLater = true
       }
     }
   }
@@ -145,14 +155,6 @@ class Preload {
         images.size++
       }
     }
-  }
-
-  #querySelector(selectors) {
-    return this.#window.document.querySelector(selectors)
-  }
-
-  #querySelectorAll(selectors) {
-    return this.#window.document.querySelectorAll(selectors)
   }
 
   constructor() {
