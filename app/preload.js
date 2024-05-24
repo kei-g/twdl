@@ -71,6 +71,38 @@ class Preload {
     ipcRenderer.sendToHost('images-found', ctx, ...args)
   }
 
+  #handleMainRole(ctx, mainRole, reactRoot) {
+    const primaries = mainRole.querySelectorAll('div[data-testid="primaryColumn"]')
+    if (primaries.length) {
+      primaries.forEach(this.#handlePrimaryColumn.bind(this, ctx))
+      if (!ctx.error) {
+        const errorDetail = reactRoot.querySelector('[data-testid="error-detail"]')
+        if (errorDetail) {
+          ctx.error = accumulateTextContents(errorDetail.querySelectorAll('div>span:first-child span')).join(',')
+          delete ctx.retryLater
+        }
+        else {
+          const toast = reactRoot.querySelector('[data-testid="toast"]')
+          if (toast?.innerText === 'そのポストは削除されました。')
+            ctx.error = toast.innerText
+          else {
+            const progressbars = mainRole.querySelectorAll('div[aria-label][role="progressbar"]')
+            if (progressbars.length) {
+              ctx.error = accumulateTextContents(progressbars.item(0).querySelectorAll('span')).join(',')
+              ctx.retryLater = true
+            }
+            else
+              this.#handleArticles(ctx, mainRole)
+          }
+        }
+      }
+    }
+    else {
+      ctx.error = 'primaryColumnが無い'
+      ctx.retryLater = true
+    }
+  }
+
   #handlePrimaryColumn(ctx, primaryColumn) {
     if (!ctx.error) {
       const cells = primaryColumn.querySelectorAll('div[data-testid="cellInnerDiv"]')
@@ -93,36 +125,8 @@ class Preload {
     else {
       const mainRoles = reactRoot.querySelectorAll('main[role="main"]')
       if (mainRoles.length === 1) {
-        const main = mainRoles.item(0)
-        const primaries = main.querySelectorAll('div[data-testid="primaryColumn"]')
-        if (primaries.length) {
-          primaries.forEach(this.#handlePrimaryColumn.bind(this, ctx))
-          if (!ctx.error) {
-            const errorDetail = reactRoot.querySelector('[data-testid="error-detail"]')
-            if (errorDetail) {
-              ctx.error = accumulateTextContents(errorDetail.querySelectorAll('div>span:first-child span')).join(',')
-              delete ctx.retryLater
-            }
-            else {
-              const toast = reactRoot.querySelector('[data-testid="toast"]')
-              if (toast?.innerText === 'そのポストは削除されました。')
-                ctx.error = toast.innerText
-              else {
-                const progressbars = main.querySelectorAll('div[aria-label][role="progressbar"]')
-                if (progressbars.length) {
-                  ctx.error = accumulateTextContents(progressbars.item(0).querySelectorAll('span')).join(',')
-                  ctx.retryLater = true
-                }
-                else
-                  this.#handleArticles(ctx, main)
-              }
-            }
-          }
-        }
-        else {
-          ctx.error = 'primaryColumnが無い'
-          ctx.retryLater = true
-        }
+        const mainRole = mainRoles.item(0)
+        this.#handleMainRole(ctx, mainRole, reactRoot)
       }
       else {
         ctx.error = `${mainRoles.length}個の<main>タグ`
