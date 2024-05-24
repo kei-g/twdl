@@ -31,7 +31,7 @@ class Application {
       ipcRenderer.send('images-found', { abort: false, error: 'タイムアウト' })
     else {
       if (images.error)
-        console.error(images.error)
+        console.log(images)
       images.retryLater || images.size === 0
         ? this.#requestLookupImages(epoch, period, timeout, period)
         : ipcRenderer.send('images-found', images)

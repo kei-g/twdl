@@ -17,6 +17,7 @@ class Preload {
       const notices = articles.item(0).querySelectorAll('span:has(>span)+a[href="https://help.twitter.com/rules-and-policies/notices-on-twitter"][role="link"][target="_blank"]')
       if (notices.length) {
         images.error = accumulateTextContents(notices.item(0).parentElement.children.item(0).querySelectorAll('span')).join(',')
+        images.errorAt = 'notice'
         delete images.retryLater
         delete images.size
       }
@@ -58,6 +59,7 @@ class Preload {
     if (this.#caught.length) {
       ctx.abort = true
       ctx.error = this.#caught.splice(0).map(c => c.message).join(',')
+      ctx.errorAt = 'rejection'
     }
     else {
       const reactRoot = this.#window.document.querySelector('#react-root')
@@ -79,16 +81,20 @@ class Preload {
         const errorDetail = reactRoot.querySelector('[data-testid="error-detail"]')
         if (errorDetail) {
           ctx.error = accumulateTextContents(errorDetail.querySelectorAll('div>span:first-child span')).join(',')
+          ctx.errorAt = 'error-detail'
           delete ctx.retryLater
         }
         else {
           const toast = reactRoot.querySelector('[data-testid="toast"]')
-          if (toast?.innerText === 'そのポストは削除されました。')
+          if (toast?.innerText === 'そのポストは削除されました。') {
             ctx.error = toast.innerText
+            ctx.errorAt = 'toast'
+          }
           else {
             const progressbars = mainRole.querySelectorAll('div[aria-label][role="progressbar"]')
             if (progressbars.length) {
               ctx.error = accumulateTextContents(progressbars.item(0).querySelectorAll('span')).join(',')
+              ctx.errorAt = 'progressbar@2'
               ctx.retryLater = true
             }
             else
@@ -110,6 +116,7 @@ class Preload {
         const progressbars = primaryColumn.querySelectorAll('div[role="progressbar"]:has(>div>svg>circle)')
         if (progressbars.length) {
           ctx.error = progressbars.item(0).ariaLabel
+          ctx.errorAt = 'progressbar'
           ctx.retryLater = true
         }
       }
@@ -121,6 +128,7 @@ class Preload {
     if (failure) {
       ctx.abort = true
       ctx.error = 'スクリプト読み込みエラー'
+      ctx.errorAt = 'ScriptLoadFailure'
     }
     else {
       const mainRoles = reactRoot.querySelectorAll('main[role="main"]')
