@@ -34,7 +34,7 @@
     "clean": "rimraf app/dist/ dist/",
     "download:rcedit": "test -f tools/rcedit-x64.exe || curl -Ls -o tools/rcedit-x64.exe https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe",
     "prebuild": "run-s clean",
-    "start": "npm exec --workspace app -- electron main.js"
+    "start": "npm exec --workspace app -- electron index.mjs"
   },
   "version": "1.0.0",
   "workspaces": {

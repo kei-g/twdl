@@ -1,5 +1,3 @@
-const { ipcRenderer } = require('electron')
-
 class Application {
   #controls = {
     webViewAudioMuted: undefined,

@@ -30,7 +30,7 @@
     </div>
 
     <div id="panes">
-      <webview disablewebsecurity id="webview" nodeintegration preload="preload.js" src="https://twitter.com/home" webpreferences="autoplayPolicy=user-gesture-required,disableHtmlFullscreenWindowResize=true,images=false,safeDialogs=true"></webview>
+      <webview id="webview" nodeintegration preload="preload.js" src="https://twitter.com/home" webpreferences="autoplayPolicy=user-gesture-required,contextIsolation=true,disableHtmlFullscreenWindowResize=true,images=false,nodeIntegration=false,safeDialogs=true,sandbox=true,webSecurity=true"></webview>
       <div class="hidden" id="right-pane">
         <p class="tooltip">
           <span class="tooltip-text"></span>
