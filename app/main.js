@@ -11,7 +11,9 @@ class Application {
   }
 
   #changeWebViewHeight() {
-    this.#webView.style.height = `${this.#controls.webViewHeight.value}px`
+    const height = `${this.#controls.webViewHeight.value}px`
+    this.#webView.style.minHeight = height
+    this.#webView.style.height = height
   }
 
   #getElementById(id) {
