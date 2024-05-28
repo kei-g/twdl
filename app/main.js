@@ -59,7 +59,26 @@ class Application {
     const audioMuted = config.webView?.audioMuted ?? true
     const webViewHeight = config.webView?.size?.height ?? 554
     const source = this.#getElementById('source-file')
-    source.addEventListener('change', invokeDownload.bind(this, source))
+    source.addEventListener(
+      'change',
+      () => beginDownload.disabled = !source.files.length
+    )
+    const beginDownload = this.#getElementById('begin-download')
+    const cancelDownload = this.#getElementById('cancel-download')
+    beginDownload.addEventListener(
+      'click',
+      async () => {
+        beginDownload.disabled = true
+        cancelDownload.disabled = false
+        for (const file of source.files) {
+          const name = await file.text()
+          await ipcRenderer.invoke('download', name)
+        }
+        beginDownload.disabled = false
+        cancelDownload.disabled = true
+      }
+    )
+    cancelDownload.addEventListener('click', ipcRenderer.invoke.bind(ipcRenderer, 'message-box', 'キャンセル機能は未実装です'))
     const webView = this.#getElementById('webview')
     this.#webView = webView
     if (config.webView?.openDevTools)

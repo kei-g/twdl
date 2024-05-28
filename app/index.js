@@ -12,6 +12,17 @@ class MainWindow extends BrowserWindow {
     return Promise.resolve(this.#config)
   }
 
+  #messageBox(_, message) {
+    dialog.showMessageBox(
+      this,
+      {
+        message,
+        title: app.getName(),
+        type: 'warning',
+      }
+    )
+  }
+
   #openDirectory() {
     return dialog.showOpenDialog(
       this,
@@ -63,6 +74,7 @@ class MainWindow extends BrowserWindow {
     this.#config = config
     this.#configPath = configPath
     ipcMain.handle('get-config', this.#getConfig.bind(this))
+    ipcMain.handle('message-box', this.#messageBox.bind(this))
     ipcMain.handle('open-directory', this.#openDirectory.bind(this))
     ipcMain.handle('set-config', this.#setConfig.bind(this))
   }
