@@ -49,7 +49,53 @@ class Application {
     const audioMuted = config.webView?.audioMuted ?? true
     const webViewHeight = config.webView?.size?.height ?? 554
     const source = this.#getElementById('source-file')
-    source.addEventListener('change', invokeDownload.bind(this, source))
+    source.addEventListener(
+      'change',
+      () => {
+        const shouldDisable = !source.files.length
+        beginDownload.disabled = shouldDisable
+        selectByDateRange.disabled = shouldDisable
+      }
+    )
+    const beginDownload = this.#getElementById('begin-download')
+    const cancelDownload = this.#getElementById('cancel-download')
+    beginDownload.addEventListener(
+      'click',
+      async () => {
+        beginDownload.disabled = true
+        cancelDownload.disabled = false
+        selectByDateRange.disabled = true
+        for (const file of source.files) {
+          const name = await file.text()
+          await ipcRenderer.invoke('download', name)
+        }
+        beginDownload.disabled = false
+        cancelDownload.disabled = true
+        selectByDateRange.disabled = false
+      }
+    )
+    cancelDownload.addEventListener('click', ipcRenderer.invoke.bind(ipcRenderer, 'message-box', 'キャンセル機能は未実装です'))
+    const selectByDateRange = this.#getElementById('select-by-date-range')
+    selectByDateRange.addEventListener(
+      'click',
+      async () => {
+        beginDownload.disabled = true
+        selectByDateRange.disabled = true
+        await ipcRenderer.invoke(
+          'select-by-date-range',
+          await source.files.item(0).text(),
+          since.value,
+          until.value
+        )
+      }
+    )
+    ipcRenderer.on(
+      'complete-selection',
+      () => {
+        beginDownload.disabled = false
+        selectByDateRange.disabled = false
+      }
+    )
     const webView = this.#getElementById('webview')
     this.#webView = webView
     if (config.webView?.openDevTools)
@@ -59,10 +105,12 @@ class Application {
     webView.addEventListener('console-message', this.#handleConsoleMessage.bind(this))
     webView.addEventListener('ipc-message', this.#handleIpcMessage.bind(this))
     this.#getElementById('destination-directory').value = config.destinationDirectory
+    const since = this.#getElementById('since')
     if (config.range?.since)
-      this.#getElementById('since').value = config.range.since
+      since.value = config.range.since
+    const until = this.#getElementById('until')
     if (config.range?.until)
-      this.#getElementById('until').value = config.range.until
+      until.value = config.range.until
     this.#getElementById('initial-delay').value = config.timer?.initialDelay ?? 100
     this.#getElementById('timeout').value = config.timer?.timeout ?? 5000
     this.#getElementById('period').value = config.timer?.period ?? 125

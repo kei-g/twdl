@@ -2,7 +2,7 @@ import { BrowserWindow, app, dialog, ipcMain } from 'electron'
 import { EOL } from 'node:os'
 import { appendFile, writeFile, readFile, stat } from 'node:fs/promises'
 import { cwd } from 'node:process'
-import { join as joinPath } from 'node:path'
+import { join as joinPath, resolve as resolvePath, sep } from 'node:path'
 
 class MainWindow extends BrowserWindow {
   #config = {}
@@ -10,6 +10,17 @@ class MainWindow extends BrowserWindow {
 
   #getConfig() {
     return Promise.resolve(this.#config)
+  }
+
+  #messageBox(_, message) {
+    dialog.showMessageBox(
+      this,
+      {
+        message,
+        title: app.getName(),
+        type: 'warning',
+      }
+    )
   }
 
   #openDirectory() {
@@ -21,6 +32,62 @@ class MainWindow extends BrowserWindow {
         ],
       }
     )
+  }
+
+  async #selectByDateRange(_, text, sinceText, untilText) {
+    const [since, until] = [
+      new Date(sinceText ?? new Date('1970-01-01T00:00:00.000Z').toISOString()).getTime(),
+      new Date(untilText).getTime(),
+    ].map(purifyNaN(Date.now()))
+    const filter = createFilterBetween('at', since, until)
+    const index = text.indexOf('[')
+    const source = tryParseJSON(text.substring(index), [])
+    const ctx = { count: 0, total: 0 }
+    const dm = source.map(
+      conversation => {
+        const { dmConversation: d } = conversation
+        const { messages } = d
+        d.messages = messages.map(composeMessageWithTimestamp).filter(filter).map(decomposeMessage)
+        ctx.count += d.messages.length
+        ctx.total += messages.length
+        return conversation
+      }
+    ).filter(containsAnyMessages)
+    const { canceled, filePath } = await dialog.showSaveDialog(
+      this,
+      {
+        filters: [
+          {
+            extensions: [
+              'js',
+            ],
+            name: 'JSファイル',
+          }
+        ],
+        properties: [
+          'createDirectory',
+          'showOverwriteConfirmation',
+        ],
+        title: '保存先のJSファイルを指定してください',
+      }
+    )
+    if (canceled)
+      this.webContents.send('complete-selection', { canceled })
+    else {
+      const path = resolvePath(filePath)
+      const fileName = path.split(sep).at(-1)
+      const json = JSON.stringify(dm, 0, 2).replaceAll(/\r?\n/g, EOL)
+      await writeFile(path, Buffer.from(`window.YTD.direct_messages.part0 = ${json}${EOL}`))
+      await dialog.showMessageBox(
+        this,
+        {
+          message: `${fileName}は${source.length}件中${dm.length}件の会話と${ctx.total}件中${ctx.count}件のメッセージを含みます${EOL}⚠️このファイルを使用するには再度JSファイルを指定してください`,
+          title: `${fileName}にファイルを保存しました`,
+          type: 'info',
+        }
+      )
+      this.webContents.send('complete-selection', { fileName })
+    }
   }
 
   async #setConfig(_, config) {
@@ -65,7 +132,9 @@ class MainWindow extends BrowserWindow {
     this.#config = config
     this.#configPath = configPath
     ipcMain.handle('get-config', this.#getConfig.bind(this))
+    ipcMain.handle('message-box', this.#messageBox.bind(this))
     ipcMain.handle('open-directory', this.#openDirectory.bind(this))
+    ipcMain.handle('select-by-date-range', this.#selectByDateRange.bind(this))
     ipcMain.handle('set-config', this.#setConfig.bind(this))
   }
 
@@ -98,6 +167,19 @@ const accumulateMessages = (conversation, messages) => {
     0
   )
 }
+
+const composeMessageWithTimestamp = message => {
+  return {
+    at: new Date(message.messageCreate.createdAt).getTime(),
+    message,
+  }
+}
+
+const containsAnyMessages = conversation => !!conversation.dmConversation.messages.length
+
+const createFilterBetween = (key, since, until) => m => since <= m[key] && m[key] <= until
+
+const decomposeMessage = composed => composed.message
 
 const fakeUserDataPath = () => {
   const paths = [joinPath(app.getPath('appData'), 'twdl'), app.getPath('userData')]
@@ -212,6 +294,8 @@ const lookup = async (config, text, webContents) => {
     }
   }
 }
+
+const purifyNaN = alternateValue => value => [value, alternateValue][+Number.isNaN(value)]
 
 const returnPseudoStat = () => {
   return {
