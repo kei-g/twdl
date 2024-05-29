@@ -236,7 +236,7 @@ const download = async (config, name, matched, url, webContents) => {
   const [res] = await task
   const { data, status, statusText } = res
   if (status === 200)
-    await writeFile(joinPath(config.destinationDirectory, name), data)
+    await writeFile(joinPath(config.destinationDirectory, name.replaceAll(/[/\\]+/g, '-')), data)
   else
     webContents.send('status', `エラーが発生しました, ${statusText}`)
   await appendFile(
