@@ -65,6 +65,7 @@ class Application {
         beginDownload.disabled = true
         cancelDownload.disabled = false
         selectByDateRange.disabled = true
+        clearDateRanges.disabled = true
         for (const file of source.files) {
           const name = await file.text()
           await ipcRenderer.invoke('download', name)
@@ -72,6 +73,7 @@ class Application {
         beginDownload.disabled = false
         cancelDownload.disabled = true
         selectByDateRange.disabled = false
+        clearDateRanges.disabled = false
       }
     )
     cancelDownload.addEventListener('click', ipcRenderer.invoke.bind(ipcRenderer, 'message-box', 'キャンセル機能は未実装です'))
@@ -81,6 +83,7 @@ class Application {
       async () => {
         beginDownload.disabled = true
         selectByDateRange.disabled = true
+        clearDateRanges.disabled = true
         await ipcRenderer.invoke(
           'select-by-date-range',
           await source.files.item(0).text(),
@@ -94,6 +97,17 @@ class Application {
       () => {
         beginDownload.disabled = false
         selectByDateRange.disabled = false
+        clearDateRanges.disabled = false
+      }
+    )
+    const clearDateRanges = this.#getElementById('clear-date-ranges')
+    clearDateRanges.addEventListener(
+      'click',
+      async () => {
+        since.value = undefined
+        until.value = undefined
+        delete config.range
+        await ipcRenderer.invoke('set-config', config)
       }
     )
     const webView = this.#getElementById('webview')
