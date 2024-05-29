@@ -149,7 +149,7 @@ class Preload {
 
   #handleVideoElement(images, video) {
     const [label, poster, src, type] = ['aria-label', 'poster', 'src', 'type'].map(video.getAttribute.bind(video))
-    const m = src.match(/^(?<prefix>https:\/\/video\.twimg\.com\/tweet_video\/)(?<id>[^.]+)\.(?<format>.+)$/)
+    const m = src?.match(/^(?<prefix>https:\/\/video\.twimg\.com\/tweet_video\/)(?<id>[^.]+)\.(?<format>.+)$/)
     if (m) {
       const { format, id, prefix } = m.groups
       const matched = m[0]
