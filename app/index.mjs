@@ -327,6 +327,12 @@ const waitForEvent = eventName => new Promise(
   )
 )
 
+if (!app.isPackaged) {
+  const data = await readFile('package.json').catch(() => Buffer.from('{}'))
+  const { name } = tryParseJSON(data.toString(), {})
+  app.setName(name)
+}
+
 app.enableSandbox()
 
 app.once('ready', initializeApplication)
