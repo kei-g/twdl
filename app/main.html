@@ -23,7 +23,17 @@
       <fieldset class="fit-content">
         <button disabled id="begin-download">開始</button>
         <button disabled id="cancel-download">キャンセル</button>
-        <button disabled id="select-by-date-range">指定期間のJSファイルを生成する</button>
+      </fieldset>
+      <fieldset>
+        <span>
+          <label for="since">開始日</label>
+          <input data-config-at="range.since" id="since" type="date" />
+        </span>
+        <span>
+          <label for="until">終了日</label>
+          <input data-config-at="range.until" id="until" type="date" />
+        </span>
+        <button disabled id="select-by-date-range">絞り込み</button>
       </fieldset>
       <p>
         <button data-modal-for="config">設定</button>
@@ -56,18 +66,6 @@
             <input data-config-at="destinationDirectory" id="destination-directory" readonly type="text" />
             <button data-opendir-for="destination-directory">参照</button>
           </div>
-
-          <fieldset>
-            <legend>日付範囲</legend>
-            <span>
-              <label for="since">開始日時</label>
-              <input data-config-at="range.since" id="since" type="date" />
-            </span>
-            <span>
-              <label for="until">終了日時</label>
-              <input data-config-at="range.until" id="until" type="date" />
-            </span>
-          </fieldset>
 
           <fieldset>
             <legend>タイマー</legend>
