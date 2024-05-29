@@ -1,8 +1,8 @@
-import { BrowserWindow, app, dialog, ipcMain } from 'electron'
-import { EOL } from 'node:os'
-import { appendFile, writeFile, readFile, stat } from 'node:fs/promises'
-import { cwd } from 'node:process'
-import { join as joinPath, resolve as resolvePath, sep } from 'node:path'
+const { BrowserWindow, app, dialog, ipcMain } = await import('electron')
+const { EOL } = await import('node:os')
+const { appendFile, writeFile, readFile, stat } = await import('node:fs/promises')
+const { cwd } = await import('node:process')
+const { join: joinPath, resolve: resolvePath, sep } = await import('node:path')
 
 class MainWindow extends BrowserWindow {
   #config = {}
