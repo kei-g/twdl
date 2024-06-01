@@ -18,11 +18,8 @@
   },
   "scripts": {
     "archive": "tools/mkdir.mjs dist && cd app/dist && mv win-unpacked twdl && zip -9r ../../dist/twdl.zip twdl && mv twdl win-unpacked",
-    "build": "npm-run-all -s build:icon -p build:app:*",
-    "build:app:linux": "npm exec --workspace app -- electron-builder build --dir --linux --x64",
-    "build:app:win64": "npm-run-all -p build:app:win64:build download:rcedit -s build:app:win64:rcedit",
-    "build:app:win64:build": "npm exec --workspace app -- electron-builder build --dir --win --x64 2>&1 | head -n3 || true",
-    "build:app:win64:rcedit": "wine64 tools/rcedit-x64.exe app/dist/win-unpacked/twdl.exe --set-version-string FileDescription 'Twitterの画像を一括ダウンロードします' --set-version-string ProductName 'Twitter Images Downloader' --set-version-string LegalCopyright 'Copyright © 2024 kei-g' --set-file-version $(tools/version.mjs --file) --set-product-version $(tools/version.mjs --product) --set-version-string InternalName twdl --set-version-string OriginalFilename twdl.exe --set-version-string CompanyName kei-g --set-icon app/dist/.icon-ico/icon.ico && sleep 1",
+    "build": "run-s build:icon build:app",
+    "build:app": "tools/build-in-xvfb.mjs",
     "build:icon": "npm-run-all -p build:prepare-icon:* -p build:icon:*",
     "build:icon:32": "convert app/dist/twdl.png -resize 32x32 -strip app/dist/32.png",
     "build:icon:48": "convert app/dist/twdl.png -resize 48x48 -strip app/dist/48.png",

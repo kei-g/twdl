@@ -24,7 +24,9 @@ jobs:
             fonts-cascadia-code \
             imagemagick \
             inkscape \
-            winetricks
+            winetricks \
+            xdotool \
+            xvfb
       - name: Checkout
         uses: actions/checkout@v4
         with:

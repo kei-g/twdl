@@ -17,6 +17,8 @@
     "twdl",
     "twimg",
     "webp",
+    "winecfg",
+    "xvfb",
   ],
   "files.associations": {
     "**/LICENSE": "plaintext",
