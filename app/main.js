@@ -175,19 +175,28 @@ class Application {
     )
   }
 
+  async #selectByDateRange() {
+    this.#controls.beginDownload.disabled = true
+    this.#controls.selectByDateRange.disabled = true
+    this.#controls.clearDateRanges.disabled = true
+    await ipcRenderer.invoke(
+      'select-by-date-range',
+      await this.#controls.source.files.item(0).text(),
+      this.#controls.since.value,
+      this.#controls.until.value
+    )
+  }
+
+  constructor() {
+    ipcRenderer.on('complete-selection', this.#handleSelectionCompletion.bind(this))
+    ipcRenderer.on('load', this.#load.bind(this))
+  }
+
   attachTo(window) {
     this.#window = window
     window.addEventListener('DOMContentLoaded', this.#initializeComponents.bind(this))
   }
 }
-
-const invokeDownload = async (source, _) => await Promise.all(
-  [...source.files].map(
-    file => file.text().then(
-      ipcRenderer.invoke.bind(ipcRenderer, 'download')
-    ).catch(() => undefined)
-  )
-)
 
 const actionTemplate = {
   checkbox: element => element.checked,
