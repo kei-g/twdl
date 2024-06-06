@@ -120,7 +120,7 @@ class MainWindow extends BrowserWindow {
           disableHtmlFullscreenWindowResize: true,
           experimentalFeatures: false,
           nodeIntegration: false,
-          preload: joinPath(app.getAppPath(), 'bridge.js'),
+          preload: joinPath(app.getAppPath(), 'bridge.cjs'),
           sandbox: true,
           textAreasAreResizable: false,
           webSecurity: true,
