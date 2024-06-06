@@ -4,14 +4,18 @@ class Application {
     beginDownload: undefined,
     cancelDownload: undefined,
     clearDateRanges: undefined,
+    destinationDirectory: undefined,
+    initialDelay: undefined,
+    period: undefined,
     selectByDateRange: undefined,
     since: undefined,
     sourceFile: undefined,
+    timeout: undefined,
     until: undefined,
-    webViewAudioMuted: undefined,
-    webViewHeight: undefined,
+    webview: undefined,
+    webviewAudioMuted: undefined,
+    webviewHeight: undefined,
   }
-  #webView = undefined
   #window = undefined
 
   async #beginDownload() {
@@ -30,13 +34,13 @@ class Application {
   }
 
   #changeWebViewAudioMuted() {
-    this.#webView.setAudioMuted(this.#controls.webViewAudioMuted.checked)
+    this.#controls.webview.setAudioMuted(this.#controls.webviewAudioMuted.checked)
   }
 
   #changeWebViewHeight() {
-    const height = `${this.#controls.webViewHeight.value}px`
-    this.#webView.style.minHeight = height
-    this.#webView.style.height = height
+    const height = `${this.#controls.webviewHeight.value}px`
+    this.#controls.webview.style.minHeight = height
+    this.#controls.webview.style.height = height
   }
 
   async #clearDateRanges() {
@@ -44,10 +48,6 @@ class Application {
     this.#controls.until.value = undefined
     delete this.#config.range
     await ipcRenderer.invoke('set-config', this.#config)
-  }
-
-  #getElementById(id) {
-    return this.#window.document.getElementById(id)
   }
 
   #handleConsoleMessage(event) {
@@ -88,45 +88,32 @@ class Application {
 
   async #initializeComponents() {
     this.#config = await ipcRenderer.invoke('get-config')
-    const config = this.#config
-    const audioMuted = config.webView?.audioMuted ?? true
-    const webViewHeight = config.webView?.size?.height ?? 554
-    this.#controls.sourceFile = this.#getElementById('source-file')
+    this.#resolveControls()
+    const audioMuted = this.#config.webview?.audioMuted ?? true
+    const webViewHeight = this.#config.webview?.size?.height ?? 554
     this.#controls.sourceFile.addEventListener('change', this.#handleSourceChange.bind(this))
-    this.#controls.beginDownload = this.#getElementById('begin-download')
-    this.#controls.cancelDownload = this.#getElementById('cancel-download')
     this.#controls.beginDownload.addEventListener('click', this.#beginDownload.bind(this))
     this.#controls.cancelDownload.addEventListener('click', ipcRenderer.invoke.bind(ipcRenderer, 'message-box', 'キャンセル機能は未実装です'))
-    this.#controls.selectByDateRange = this.#getElementById('select-by-date-range')
     this.#controls.selectByDateRange.addEventListener('click', this.#selectByDateRange.bind(this))
-    this.#controls.clearDateRanges = this.#getElementById('clear-date-ranges')
     this.#controls.clearDateRanges.addEventListener('click', this.#clearDateRanges.bind(this))
-    const webView = this.#getElementById('webview')
-    this.#webView = webView
-    if (config.webView?.openDevTools)
-      webView.addEventListener('dom-ready', this.#openDevTools.bind(this), { once: true })
-    webView.style.height = `${webViewHeight}px`
-    webView.setAudioMuted(audioMuted)
-    webView.addEventListener('console-message', this.#handleConsoleMessage.bind(this))
-    webView.addEventListener('ipc-message', this.#handleIpcMessage.bind(this))
-    this.#getElementById('destination-directory').value = config.destinationDirectory
-    this.#controls.since = this.#getElementById('since')
-    if (config.range?.since)
-      this.#controls.since.value = config.range.since
-    this.#controls.until = this.#getElementById('until')
-    if (config.range?.until)
-      this.#controls.until.value = config.range.until
-    this.#getElementById('initial-delay').value = config.timer?.initialDelay ?? 100
-    this.#getElementById('timeout').value = config.timer?.timeout ?? 5000
-    this.#getElementById('period').value = config.timer?.period ?? 125
-    const wh = this.#getElementById('webview-height')
-    this.#controls.webViewHeight = wh
-    wh.addEventListener('change', this.#changeWebViewHeight.bind(this))
-    wh.value = webViewHeight
-    const wam = this.#getElementById('webview-audio-muted')
-    this.#controls.webViewAudioMuted = wam
-    wam.addEventListener('change', this.#changeWebViewAudioMuted.bind(this))
-    wam.checked = audioMuted
+    if (this.#config.webView?.openDevTools)
+      this.#controls.webview.addEventListener('dom-ready', this.#openDevTools.bind(this), { once: true })
+    this.#controls.webview.style.height = `${webViewHeight}px`
+    this.#controls.webview.setAudioMuted(audioMuted)
+    this.#controls.webview.addEventListener('console-message', this.#handleConsoleMessage.bind(this))
+    this.#controls.webview.addEventListener('ipc-message', this.#handleIpcMessage.bind(this))
+    this.#controls.destinationDirectory.value = this.#config.destinationDirectory
+    if (this.#config.range?.since)
+      this.#controls.since.value = this.#config.range.since
+    if (this.#config.range?.until)
+      this.#controls.until.value = this.#config.range.until
+    this.#controls.initialDelay.value = this.#config.timer?.initialDelay ?? 100
+    this.#controls.timeout.value = this.#config.timer?.timeout ?? 5000
+    this.#controls.period.value = this.#config.timer?.period ?? 125
+    this.#controls.webviewHeight.addEventListener('change', this.#changeWebViewHeight.bind(this))
+    this.#controls.webviewHeight.value = webViewHeight
+    this.#controls.webviewAudioMuted.addEventListener('change', this.#changeWebViewAudioMuted.bind(this))
+    this.#controls.webviewAudioMuted.checked = audioMuted
     observeConfigurationChanges()
     prepareModalControllers()
     prepareOpenDirectory()
@@ -134,26 +121,28 @@ class Application {
 
   async #load(_, url) {
     const epoch = Date.now()
-    const [initialDelay, period, timeout] = ['initial-delay', 'period', 'timeout'].map(
-      id => parseInt(this.#window.document.getElementById(id).value)
-    )
-    const webView = this.#webView
+    const [initialDelay, period, timeout] = [
+      this.#controls.initialDelay,
+      this.#controls.period,
+      this.#controls.timeout,
+    ].map(control => parseInt(control.value))
+    const webview = this.#controls.webview
     const task = new Promise(
-      resolve => webView.addEventListener('dom-ready', resolve, { once: true })
+      resolve => webview.addEventListener('dom-ready', resolve, { once: true })
     )
-    await webView.loadURL(url)
+    await webview.loadURL(url)
     await task
     this.#requestLookupImages(epoch, period, timeout, initialDelay)
   }
 
   #openDevTools() {
-    this.#webView.openDevTools()
+    this.#controls.webview.openDevTools()
   }
 
   #requestLookupImages(epoch, period, timeout, delay) {
     this.#window.setTimeout(
-      this.#webView.send.bind(
-        this.#webView,
+      this.#controls.webview.send.bind(
+        this.#controls.webview,
         'lookup-images',
         {
           epoch,
@@ -163,6 +152,14 @@ class Application {
       ),
       delay
     )
+  }
+
+  #resolveControls(context, key) {
+    if (context)
+      context[key] = this.#window.document.getElementById(hyphenate(key))
+    else
+      this.#controls = Object.keys(this.#controls).reduce(this.#resolveControls.bind(this), {})
+    return context
   }
 
   async #selectByDateRange() {
@@ -192,6 +189,8 @@ const actionTemplate = {
   checkbox: element => element.checked,
   number: element => parseInt(element.value),
 }
+
+const hyphenate = camelCase => camelCase.replaceAll(/(?<=[a-z])([A-Z][a-z]*)/g, value => `-${value.toLowerCase()}`)
 
 const observeConfigurationChanges = () => {
   for (const element of document.querySelectorAll('[data-config-at]'))
