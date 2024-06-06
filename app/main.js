@@ -1,10 +1,33 @@
 class Application {
+  #config = {}
   #controls = {
+    beginDownload: undefined,
+    cancelDownload: undefined,
+    clearDateRanges: undefined,
+    selectByDateRange: undefined,
+    since: undefined,
+    sourceFile: undefined,
+    until: undefined,
     webViewAudioMuted: undefined,
     webViewHeight: undefined,
   }
   #webView = undefined
   #window = undefined
+
+  async #beginDownload() {
+    this.#controls.beginDownload.disabled = true
+    this.#controls.cancelDownload.disabled = false
+    this.#controls.selectByDateRange.disabled = true
+    this.#controls.clearDateRanges.disabled = true
+    for (const file of this.#controls.sourceFile.files) {
+      const name = await file.text()
+      await ipcRenderer.invoke('download', name)
+    }
+    this.#controls.beginDownload.disabled = false
+    this.#controls.cancelDownload.disabled = true
+    this.#controls.selectByDateRange.disabled = false
+    this.#controls.clearDateRanges.disabled = false
+  }
 
   #changeWebViewAudioMuted() {
     this.#webView.setAudioMuted(this.#controls.webViewAudioMuted.checked)
@@ -14,6 +37,13 @@ class Application {
     const height = `${this.#controls.webViewHeight.value}px`
     this.#webView.style.minHeight = height
     this.#webView.style.height = height
+  }
+
+  async #clearDateRanges() {
+    this.#controls.since.value = undefined
+    this.#controls.until.value = undefined
+    delete this.#config.range
+    await ipcRenderer.invoke('set-config', this.#config)
   }
 
   #getElementById(id) {
@@ -44,72 +74,33 @@ class Application {
       : ipcRenderer.send(event.channel, ...event.args)
   }
 
+  #handleSelectionCompletion() {
+    this.#controls.beginDownload.disabled = false
+    this.#controls.selectByDateRange.disabled = false
+    this.#controls.clearDateRanges.disabled = false
+  }
+
+  #handleSourceChange() {
+    const shouldDisable = !this.#controls.sourceFile.files.length
+    this.#controls.beginDownload.disabled = shouldDisable
+    this.#controls.selectByDateRange.disabled = shouldDisable
+  }
+
   async #initializeComponents() {
-    const config = await ipcRenderer.invoke('get-config')
+    this.#config = await ipcRenderer.invoke('get-config')
+    const config = this.#config
     const audioMuted = config.webView?.audioMuted ?? true
     const webViewHeight = config.webView?.size?.height ?? 554
-    const source = this.#getElementById('source-file')
-    source.addEventListener(
-      'change',
-      () => {
-        const shouldDisable = !source.files.length
-        beginDownload.disabled = shouldDisable
-        selectByDateRange.disabled = shouldDisable
-      }
-    )
-    const beginDownload = this.#getElementById('begin-download')
-    const cancelDownload = this.#getElementById('cancel-download')
-    beginDownload.addEventListener(
-      'click',
-      async () => {
-        beginDownload.disabled = true
-        cancelDownload.disabled = false
-        selectByDateRange.disabled = true
-        clearDateRanges.disabled = true
-        for (const file of source.files) {
-          const name = await file.text()
-          await ipcRenderer.invoke('download', name)
-        }
-        beginDownload.disabled = false
-        cancelDownload.disabled = true
-        selectByDateRange.disabled = false
-        clearDateRanges.disabled = false
-      }
-    )
-    cancelDownload.addEventListener('click', ipcRenderer.invoke.bind(ipcRenderer, 'message-box', 'キャンセル機能は未実装です'))
-    const selectByDateRange = this.#getElementById('select-by-date-range')
-    selectByDateRange.addEventListener(
-      'click',
-      async () => {
-        beginDownload.disabled = true
-        selectByDateRange.disabled = true
-        clearDateRanges.disabled = true
-        await ipcRenderer.invoke(
-          'select-by-date-range',
-          await source.files.item(0).text(),
-          since.value,
-          until.value
-        )
-      }
-    )
-    ipcRenderer.on(
-      'complete-selection',
-      () => {
-        beginDownload.disabled = false
-        selectByDateRange.disabled = false
-        clearDateRanges.disabled = false
-      }
-    )
-    const clearDateRanges = this.#getElementById('clear-date-ranges')
-    clearDateRanges.addEventListener(
-      'click',
-      async () => {
-        since.value = undefined
-        until.value = undefined
-        delete config.range
-        await ipcRenderer.invoke('set-config', config)
-      }
-    )
+    this.#controls.sourceFile = this.#getElementById('source-file')
+    this.#controls.sourceFile.addEventListener('change', this.#handleSourceChange.bind(this))
+    this.#controls.beginDownload = this.#getElementById('begin-download')
+    this.#controls.cancelDownload = this.#getElementById('cancel-download')
+    this.#controls.beginDownload.addEventListener('click', this.#beginDownload.bind(this))
+    this.#controls.cancelDownload.addEventListener('click', ipcRenderer.invoke.bind(ipcRenderer, 'message-box', 'キャンセル機能は未実装です'))
+    this.#controls.selectByDateRange = this.#getElementById('select-by-date-range')
+    this.#controls.selectByDateRange.addEventListener('click', this.#selectByDateRange.bind(this))
+    this.#controls.clearDateRanges = this.#getElementById('clear-date-ranges')
+    this.#controls.clearDateRanges.addEventListener('click', this.#clearDateRanges.bind(this))
     const webView = this.#getElementById('webview')
     this.#webView = webView
     if (config.webView?.openDevTools)
@@ -119,12 +110,12 @@ class Application {
     webView.addEventListener('console-message', this.#handleConsoleMessage.bind(this))
     webView.addEventListener('ipc-message', this.#handleIpcMessage.bind(this))
     this.#getElementById('destination-directory').value = config.destinationDirectory
-    const since = this.#getElementById('since')
+    this.#controls.since = this.#getElementById('since')
     if (config.range?.since)
-      since.value = config.range.since
-    const until = this.#getElementById('until')
+      this.#controls.since.value = config.range.since
+    this.#controls.until = this.#getElementById('until')
     if (config.range?.until)
-      until.value = config.range.until
+      this.#controls.until.value = config.range.until
     this.#getElementById('initial-delay').value = config.timer?.initialDelay ?? 100
     this.#getElementById('timeout').value = config.timer?.timeout ?? 5000
     this.#getElementById('period').value = config.timer?.period ?? 125
@@ -139,7 +130,6 @@ class Application {
     observeConfigurationChanges()
     prepareModalControllers()
     prepareOpenDirectory()
-    ipcRenderer.on('load', this.#load.bind(this))
   }
 
   async #load(_, url) {
@@ -181,7 +171,7 @@ class Application {
     this.#controls.clearDateRanges.disabled = true
     await ipcRenderer.invoke(
       'select-by-date-range',
-      await this.#controls.source.files.item(0).text(),
+      await this.#controls.sourceFile.files.item(0).text(),
       this.#controls.since.value,
       this.#controls.until.value
     )
