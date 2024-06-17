@@ -1,12 +1,39 @@
-const { BrowserWindow, app, dialog, ipcMain } = await import('electron')
+import { existsSync } from 'node:fs'
+
+const { BrowserWindow, app, dialog, ipcMain, nativeImage } = await import('electron')
 const { EOL } = await import('node:os')
-const { appendFile, writeFile, readFile, stat } = await import('node:fs/promises')
+const { appendFile, copyFile, mkdir, readFile, readdir, stat, writeFile } = await import('node:fs/promises')
 const { cwd } = await import('node:process')
 const { join: joinPath, resolve: resolvePath, sep } = await import('node:path')
 
 class MainWindow extends BrowserWindow {
   #config = {}
   #configPath = ''
+
+  async #categorizeByColor() {
+    const { destinationDirectory } = this.#config
+    for (const entry of await readdir(destinationDirectory, { withFileTypes: true }))
+      if (entry.isFile()) {
+        const path = joinPath(destinationDirectory, entry.name)
+        const image = nativeImage.createFromPath(path)
+        const { height, width } = image.getSize()
+        const data = image.toBitmap()
+        const view = new Uint8Array(data)
+        const histogram = new Map()
+        for (let y = 0; y < height / 2; y++)
+          for (let x = 0; x < width; x++) {
+            const pixel = data.readUint32LE((y * width + x) * 4)
+            const value = (((pixel >> 19) & 63) << 12) | (((pixel >> 11) & 63) << 6) | (pixel & 63)
+            const count = histogram.get(value) ?? 0
+            histogram.set(value, count + 1)
+          }
+        const major = Array.from(histogram.entries()).sort((lhs, rhs) => lhs[1] - rhs[1]).at(-1)
+        const dir = joinPath(destinationDirectory, `${major[0]}`)
+        if (!existsSync(dir))
+          await mkdir(dir)
+        await copyFile(path, joinPath(dir, entry.name))
+      }
+  }
 
   #getConfig() {
     return Promise.resolve(this.#config)
@@ -131,6 +158,7 @@ class MainWindow extends BrowserWindow {
     )
     this.#config = config
     this.#configPath = configPath
+    ipcMain.handle('categorize-by-color', this.#categorizeByColor.bind(this))
     ipcMain.handle('get-config', this.#getConfig.bind(this))
     ipcMain.handle('message-box', this.#messageBox.bind(this))
     ipcMain.handle('open-directory', this.#openDirectory.bind(this))
