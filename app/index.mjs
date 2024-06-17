@@ -56,28 +56,47 @@ class MainWindow extends BrowserWindow {
       }
     )
     await dialog.loadFile('categorizing.html')
+    const { webContents } = dialog
     const entries = await readdir(destinationDirectory, { withFileTypes: true })
     const files = entries.filter(e => e.isFile())
+    const counters = new Map()
+    const forwardMap = new Map()
+    webContents.send('status', '画像の最も特徴的な色を検出しています')
     for (let i = 0; i < files.length; i++) {
-      dialog.webContents.send('progress', i, files.length)
+      webContents.send('progress', i, files.length)
       const file = files[i]
-      await this.#categorizeByColorForFile(destinationDirectory, file)
+      const colorIndex = await this.#categorizeByColorForFile(destinationDirectory, file)
+      if (typeof colorIndex === 'number') {
+        const count = (counters.get(colorIndex) ?? 0) + 1
+        webContents.send('color-indices', colorIndex, count)
+        counters.set(colorIndex, count)
+        forwardMap.set(file.name, colorIndex)
+      }
+    }
+    webContents.send('status', 'ファイルをコピーしています')
+    for (let i = 0; i < files.length; i++) {
+      webContents.send('progress', i, files.length)
+      const { name } = files[i]
+      const colorIndex = forwardMap.get(name)
+      const count = counters.get(colorIndex)
+      await this.#copy(
+        destinationDirectory,
+        name,
+        [colorIndex, 9999][+(count < 2)]
+      )
     }
     dialog.close()
   }
 
   async #categorizeByColorForFile(destinationDirectory, file) {
     const path = joinPath(destinationDirectory, file.name)
-    const image = nativeImage.createFromPath(path)
+    const data = await readFile(path)
+    const image = nativeImage.createFromBuffer(data)
     if (!image.isEmpty()) {
       const context = {}
       const histogram = new Map()
       this.#createHistogram(context, histogram, image)
-      const name = Array.from(histogram.entries()).sort(ascendByValue).at(-1)[0].toString(10).padStart(4, '0')
-      const dir = joinPath(destinationDirectory, name)
-      if (!existsSync(dir))
-        await mkdir(dir, { recursive: true })
-      await copyFile(path, joinPath(dir, file.name))
+      const colorIndex = Array.from(histogram.entries()).sort(ascendByValue).at(-1)[0]
       if (this.#config.developmentMode) {
         this.#analyzeHistogram(context, histogram)
         await writeFile(
@@ -85,6 +104,19 @@ class MainWindow extends BrowserWindow {
           JSON.stringify(context, undefined, 2).replaceAll(/\r?\n/g, EOL)
         )
       }
+      return colorIndex
+    }
+  }
+
+  async #copy(baseDirectory, fileName, colorIndex) {
+    if (typeof colorIndex === 'number') {
+      const name = colorIndex.toString(10).padStart(4, '0')
+      const outputDirectory = joinPath(baseDirectory, name)
+      if (!existsSync(outputDirectory))
+        await mkdir(outputDirectory, { recursive: true })
+      const from = joinPath(baseDirectory, fileName)
+      const to = joinPath(outputDirectory, fileName)
+      await copyFile(from, to)
     }
   }
 

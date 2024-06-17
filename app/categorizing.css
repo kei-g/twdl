@@ -8,6 +8,13 @@
   --title-bar-color: 128, 168, 240;
 }
 
+.box {
+  display: grid;
+  height: 260px;
+  place-content: center;
+  place-items: center;
+}
+
 body,
 html,
 main {
@@ -23,7 +30,26 @@ body {
 
 main {
   display: grid;
-  height: 400px;
-  place-content: center;
-  place-items: center;
+  justify-items: center;
+}
+
+ul {
+  align-content: baseline;
+  border: 1px inset hsl(210deg, 50%, 35%);
+  border-radius: 8px;
+  display: grid;
+  font-size: smaller;
+  height: 180px;
+  list-style-type: none;
+  margin: 0;
+  overflow-y: scroll;
+  padding: 4px 8px;
+}
+
+ul::-webkit-scrollbar {
+  display: none;
+}
+
+ul>li {
+  justify-self: center;
 }
