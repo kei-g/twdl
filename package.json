@@ -41,6 +41,6 @@
   },
   "dependencies": {
     "app": "^0.1.0",
-    "electron": "^30.1.0"
+    "electron": "^31.0.1"
   }
 }
