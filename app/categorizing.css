@@ -1,0 +1,29 @@
+@import url('https://fonts.cdnfonts.com/css/cascadia-mono');
+
+:root {
+  --background-color: 11, 11, 11;
+  --body-background-color: 67, 71, 67;
+  --status-bar-color: 17, 19, 11;
+  --text-color: 224, 224, 224;
+  --title-bar-color: 128, 168, 240;
+}
+
+body,
+html,
+main {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: rgb(var(--body-background-color));
+  color: rgb(var(--text-color));
+  font-family: 'Cascadia Mono', monospace;
+}
+
+main {
+  display: grid;
+  height: 400px;
+  place-content: center;
+  place-items: center;
+}

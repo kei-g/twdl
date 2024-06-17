@@ -1,12 +1,69 @@
-const { BrowserWindow, app, dialog, ipcMain } = await import('electron')
+const { BrowserWindow, app, dialog, ipcMain, nativeImage } = await import('electron')
 const { EOL } = await import('node:os')
-const { appendFile, writeFile, readFile, stat } = await import('node:fs/promises')
+const { appendFile, copyFile, mkdir, readFile, readdir, stat, writeFile } = await import('node:fs/promises')
 const { cwd } = await import('node:process')
+const { existsSync } = await import('node:fs')
 const { join: joinPath, resolve: resolvePath, sep } = await import('node:path')
 
 class MainWindow extends BrowserWindow {
   #config = {}
   #configPath = ''
+
+  async #categorizeByColor() {
+    const { destinationDirectory } = this.#config
+    const dialog = new BrowserWindow(
+      {
+        autoHideMenuBar: true,
+        fullscreenable: false,
+        hasShadow: true,
+        height: 480,
+        maximizable: false,
+        parent: this,
+        resizable: false,
+        thickFrame: false,
+        titleBarOverlay: true,
+        transparent: false,
+        webPreferences: {
+          allowRunningInsecureContent: false,
+          contextIsolation: true,
+          defaultEncoding: 'UTF-8',
+          disableHtmlFullscreenWindowResize: true,
+          experimentalFeatures: false,
+          nodeIntegration: false,
+          preload: joinPath(app.getAppPath(), 'bridge.cjs'),
+          sandbox: true,
+          textAreasAreResizable: false,
+          webSecurity: true,
+          webviewTag: true,
+        },
+        width: 720,
+      }
+    )
+    await dialog.loadFile('categorizing.html')
+    const entries = await readdir(destinationDirectory, { withFileTypes: true })
+    const files = entries.filter(e => e.isFile())
+    for (let i = 0; i < files.length; i++) {
+      const entry = files[i]
+      dialog.webContents.send('progress', i, files.length)
+      const path = joinPath(destinationDirectory, entry.name)
+      const image = nativeImage.createFromPath(path)
+      if (!image.isEmpty()) {
+        const context = {}
+        const histogram = new Map()
+        createHistogram(context, histogram, image)
+        const name = Array.from(histogram.entries()).sort(ascendByValue).at(-1)[0].toString(10).padStart(4, '0')
+        const dir = joinPath(destinationDirectory, name)
+        if (!existsSync(dir))
+          await mkdir(dir, { recursive: true })
+        await copyFile(path, joinPath(dir, entry.name))
+        await writeFile(
+          joinPath(dir, entry.name.replace(/(?<=\.)[^.]+$/, 'json')),
+          JSON.stringify(context, undefined, 2).replaceAll(/\r?\n/g, EOL)
+        )
+      }
+    }
+    dialog.close()
+  }
 
   #getConfig() {
     return Promise.resolve(this.#config)
@@ -131,6 +188,7 @@ class MainWindow extends BrowserWindow {
     )
     this.#config = config
     this.#configPath = configPath
+    ipcMain.handle('categorize-by-color', this.#categorizeByColor.bind(this))
     ipcMain.handle('get-config', this.#getConfig.bind(this))
     ipcMain.handle('message-box', this.#messageBox.bind(this))
     ipcMain.handle('open-directory', this.#openDirectory.bind(this))
@@ -168,6 +226,10 @@ const accumulateMessages = (conversation, messages) => {
   )
 }
 
+const ascendByValue = (lhs, rhs) => lhs[1] - rhs[1]
+
+const ascending = (lhs, rhs) => lhs - rhs
+
 const composeMessageWithTimestamp = message => {
   return {
     at: new Date(message.messageCreate.createdAt).getTime(),
@@ -178,6 +240,59 @@ const composeMessageWithTimestamp = message => {
 const containsAnyMessages = conversation => !!conversation.dmConversation.messages.length
 
 const createFilterBetween = (key, since, until) => m => since <= m[key] && m[key] <= until
+
+const createHistogram = (context, histogram, image) => {
+  const { height, width } = image.getSize()
+  const size = Math.min(height, width)
+  const cx = width / 2
+  const cy = height / 2
+  const cropped = image.crop(
+    {
+      height: size,
+      width: size,
+      x: cx - size / 2,
+      y: cy - size / 2,
+    }
+  )
+  const resized = cropped.resize(
+    {
+      height: 256,
+      width: 256,
+    }
+  )
+  const data = resized.getBitmap()
+  context.total = 0
+  const rgb = new Set()
+  for (let i = 0, y = 0; y < 256; y++)
+    for (let x = 0; x < 256; i++, x++) {
+      const red = data.readUint8(i++)
+      const green = data.readUint8(i++)
+      const blue = data.readUint8(i++)
+      rgb.add(red * 65536 + green * 256 + blue)
+      const c = {
+        x: red * 0.412391 + green * 0.357584 + blue * 0.180481, // 0~242.366280…02
+        y: red * 0.212639 + green * 0.715169 + blue * 0.072192, // 0~255.0…03
+        z: red * 0.019331 + green * 0.119195 + blue * 0.950532, // 0~277.70979
+      }
+      const key = Math.floor(c.x * 255 / 3877.86048) * 256 + Math.floor(c.y / 16) * 16 + Math.floor(c.z * 255 / 4443.35664)
+      context.total += key
+      const count = histogram.get(key) ?? 0
+      histogram.set(key, count + 1)
+    }
+  context['減色前の色数'] = rgb.size
+  context['減色後の色数'] = histogram.size
+  const average = context.total / 65536
+  delete context.total
+  context['相加平均'] = average
+  const counts = Array.from(histogram.values()).sort(ascending)
+  const minimum = counts[0]
+  context['ジニ係数'] = 1 - counts.reduce((p, c) => p + c - minimum, 0) * 2 / ((counts.at(-1) - minimum) * histogram.size)
+  context.variance = 0
+  for (const key of histogram.keys())
+    context.variance += Math.pow(key - average, 2)
+  context['標準偏差'] = Math.sqrt(context.variance / 65536)
+  delete context.variance
+}
 
 const decomposeMessage = composed => composed.message
 

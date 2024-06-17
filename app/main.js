@@ -3,6 +3,7 @@ class Application {
   #controls = {
     beginDownload: undefined,
     cancelDownload: undefined,
+    categorizeByColor: undefined,
     clearDateRanges: undefined,
     destinationDirectory: undefined,
     initialDelay: undefined,
@@ -31,6 +32,13 @@ class Application {
     this.#controls.cancelDownload.disabled = true
     this.#controls.selectByDateRange.disabled = false
     this.#controls.clearDateRanges.disabled = false
+  }
+
+  async #categorizeByColor(event) {
+    const { target } = event
+    target.disabled = true
+    await ipcRenderer.invoke('categorize-by-color')
+    target.disabled = false
   }
 
   #changeWebViewAudioMuted() {
@@ -103,6 +111,7 @@ class Application {
     this.#controls.webview.addEventListener('console-message', this.#handleConsoleMessage.bind(this))
     this.#controls.webview.addEventListener('ipc-message', this.#handleIpcMessage.bind(this))
     this.#controls.destinationDirectory.value = this.#config.destinationDirectory
+    this.#controls.categorizeByColor.addEventListener('click', this.#categorizeByColor.bind(this))
     if (this.#config.range?.since)
       this.#controls.since.value = this.#config.range.since
     if (this.#config.range?.until)

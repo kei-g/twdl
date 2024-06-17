@@ -33,7 +33,7 @@
     "prebuild": "run-s clean",
     "start": "npm exec --workspace app -- electron index.mjs"
   },
-  "version": "1.0.0",
+  "version": "1.0.2",
   "workspaces": {
     "packages": [
       "app"
