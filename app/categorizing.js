@@ -40,8 +40,8 @@ class CategorizingController extends Controller {
     super()
   }
 
-  initializeComponents() {
-    super.initializeComponents()
+  async initializeComponents() {
+    await super.initializeComponents()
     ipcRenderer.on('color-indices', this.#handleColorIndex.bind(this))
     ipcRenderer.on('progress', this.#handleProgress.bind(this))
     ipcRenderer.on('status', this.#handleStatus.bind(this))

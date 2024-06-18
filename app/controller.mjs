@@ -17,6 +17,11 @@ export class Controller {
     return this.#window.get(this)?.document.getElementById(elementId)
   }
 
-  initializeComponents() {
+  async initializeComponents() {
+    await Promise.resolve()
+  }
+
+  querySelectorAll(selectors) {
+    return this.#window.get(this)?.document.querySelectorAll(selectors)
   }
 }

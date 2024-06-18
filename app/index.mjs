@@ -108,6 +108,39 @@ class MainWindow extends BrowserWindow {
     }
   }
 
+  async #configure() {
+    const dialog = new BrowserWindow(
+      {
+        autoHideMenuBar: true,
+        fullscreenable: false,
+        hasShadow: true,
+        height: 420,
+        maximizable: false,
+        parent: this,
+        resizable: false,
+        thickFrame: false,
+        titleBarOverlay: true,
+        transparent: false,
+        webPreferences: {
+          allowRunningInsecureContent: false,
+          contextIsolation: true,
+          defaultEncoding: 'UTF-8',
+          disableHtmlFullscreenWindowResize: true,
+          experimentalFeatures: false,
+          nodeIntegration: false,
+          preload: joinPath(app.getAppPath(), 'bridge.cjs'),
+          sandbox: true,
+          textAreasAreResizable: false,
+          webSecurity: true,
+          webviewTag: false,
+        },
+        width: 640,
+      }
+    )
+    await dialog.loadFile('settings.html')
+    await new Promise(dialog.on.bind(dialog, 'close'))
+  }
+
   async #copy(baseDirectory, fileName, colorIndex) {
     if (typeof colorIndex === 'number') {
       const name = colorIndex.toString(10).padStart(4, '0')
@@ -284,6 +317,7 @@ class MainWindow extends BrowserWindow {
     this.#config = config
     this.#configPath = configPath
     ipcMain.handle('categorize-by-color', this.#categorizeByColor.bind(this))
+    ipcMain.handle('configure', this.#configure.bind(this))
     ipcMain.handle('get-config', this.#getConfig.bind(this))
     ipcMain.handle('message-box', this.#messageBox.bind(this))
     ipcMain.handle('open-directory', this.#openDirectory.bind(this))
