@@ -35,7 +35,6 @@ class Preload {
     if (status === 200) {
       const blob = await res.blob()
       result.data = new Uint8Array(await blob.arrayBuffer())
-      ipcRenderer.sendToHost(channel, result)
     }
     ipcRenderer.sendToHost(channel, result)
   }
