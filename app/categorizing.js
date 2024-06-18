@@ -1,9 +1,8 @@
-class CategorizingController {
-  #window = undefined
+import { Controller } from './controller.mjs'
 
+class CategorizingController extends Controller {
   #handleColorIndex(_, colorIndex, count) {
-    const { document } = this.#window
-    const colorIndices = document.getElementById('color-indices')
+    const colorIndices = this.getElementById('color-indices')
     const id = `color-${colorIndex}`
     const text = `${colorIndex.toString(10).padStart(4, '0')} - (${count})`
     const item = document.getElementById(id)
@@ -17,7 +16,7 @@ class CategorizingController {
       )
     }
     else {
-      const item = document.createElement('li')
+      const item = this.createElement('li')
       item.id = id
       item.dataset.count = count
       item.textContent = text
@@ -26,28 +25,26 @@ class CategorizingController {
   }
 
   #handleProgress(_, current, total) {
-    const { document } = this.#window
-    const progress = document.getElementById('progress')
+    const progress = this.getElementById('progress')
     progress.textContent = `${current}/${total}`
   }
 
   #handleStatus(_, message) {
-    const { document } = this.#window
-    const progress = document.getElementById('progress')
-    const status = document.getElementById('status')
+    const progress = this.getElementById('progress')
+    const status = this.getElementById('status')
     progress.textContent = ''
     status.textContent = message
   }
 
-  #initializeComponents() {
+  constructor() {
+    super()
+  }
+
+  initializeComponents() {
+    super.initializeComponents()
     ipcRenderer.on('color-indices', this.#handleColorIndex.bind(this))
     ipcRenderer.on('progress', this.#handleProgress.bind(this))
     ipcRenderer.on('status', this.#handleStatus.bind(this))
-  }
-
-  attachTo(window) {
-    this.#window = window
-    window.addEventListener('DOMContentLoaded', this.#initializeComponents.bind(this))
   }
 }
 
