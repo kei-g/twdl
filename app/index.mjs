@@ -50,7 +50,7 @@ class MainWindow extends BrowserWindow {
           sandbox: true,
           textAreasAreResizable: false,
           webSecurity: true,
-          webviewTag: true,
+          webviewTag: false,
         },
         width: 720,
       }
