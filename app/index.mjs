@@ -100,7 +100,7 @@ class MainWindow extends BrowserWindow {
       if (this.#config.developmentMode) {
         this.#analyzeHistogram(context, histogram)
         await writeFile(
-          joinPath(dir, file.name.replace(/(?<=\.)[^.]+$/, 'json')),
+          joinPath(destinationDirectory, file.name.replace(/(?<=\.)[^.]+$/, 'json')),
           JSON.stringify(context, undefined, 2).replaceAll(/\r?\n/g, EOL)
         )
       }
