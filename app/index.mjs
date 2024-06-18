@@ -58,7 +58,7 @@ class MainWindow extends BrowserWindow {
     await dialog.loadFile('categorizing.html')
     const { webContents } = dialog
     const entries = await readdir(destinationDirectory, { withFileTypes: true })
-    const files = entries.filter(e => e.isFile())
+    const files = entries.filter(selectByFileExtensions('gif', 'jpg', 'png', 'webp'))
     const counters = new Map()
     const forwardMap = new Map()
     webContents.send('status', '画像の最も特徴的な色を検出しています')
@@ -459,6 +459,8 @@ const returnPseudoStat = () => {
     isDirectory: () => false,
   }
 }
+
+const selectByFileExtensions = (...extensions) => entry => entry.isFile() && extensions.some(ext => entry.name.endsWith(`.${ext}`))
 
 const storeConfiguration = async (path, ...args) => {
   const [_, config] = args
