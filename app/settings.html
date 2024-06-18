@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <link href="main.css" rel="stylesheet" type="text/css" />
+  <meta charset="UTF-8" />
+  <meta content="default-src 'self' 'unsafe-inline' https://fonts.cdnfonts.com/" http-equiv="Content-Security-Policy" />
+  <meta content="initial-scale=1,width=device-width" name="viewport" />
+  <script defer src="settings.js" type="module"></script>
+  <title>設定</title>
+</head>
+
+<body>
+  <div class="grid-rows modal-content">
+    <div>
+      <label for="destination-directory">保存先</label>
+      <input data-config-at="destinationDirectory" id="destination-directory" readonly type="text" />
+      <button data-opendir-for="destination-directory">参照</button>
+      <button id="categorize-by-color">色で分類</button>
+    </div>
+
+    <fieldset>
+      <legend>タイマー</legend>
+      <p>
+        <span>
+          <label for="initial-delay">初回待機</label>
+          <input data-config-at="timer.initialDelay" id="initial-delay" min="100" type="number" />
+        </span>
+        <span>
+          <label for="timeout">タイムアウト</label>
+          <input data-config-at="timer.timeout" id="timeout" min="500" step="10" type="number" />
+        </span>
+        <span>
+          <label for="period">処理間隔</label>
+          <input data-config-at="timer.period" id="period" max="500" min="80" step="5" type="number" />
+        </span>
+      </p>
+      <p>
+        <span class="sm">画像へのリンクが存在するか判定するまでの待機時間を<u>ミリ秒</u>単位で指定します</span>
+      </p>
+      <canvas id="timer-view"></canvas>
+    </fieldset>
+
+    <fieldset>
+      <legend>Twitter</legend>
+      <p>
+        <span>
+          <label for="webview-height">ウィンドウの高さ</label>
+          <input data-config-at="webview.size.height" id="webview-height" max="3072" min="554" step="1" type="number" />
+          <span>ピクセル</span>
+        </span>
+      </p>
+      <p>
+        <span>
+          <input data-config-at="webview.audioMuted" id="webview-audio-muted" type="checkbox" />
+          <label for="webview-audio-muted">音声ミュート</label>
+        </span>
+      </p>
+    </fieldset>
+  </div>
+</body>
+
+</html>
