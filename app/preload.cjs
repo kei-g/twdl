@@ -91,14 +91,7 @@ class Preload {
           }
           else {
             const progressbars = mainRole.querySelectorAll('div[aria-label][role="progressbar"]')
-            if (progressbars.length) {
-              const bar = progressbars.item(0)
-              ctx.error = accumulateTextContents(bar.querySelectorAll('span')).join(',')
-              ctx.errorAt = 'progressbar@2'
-              ctx.retryLater = true
-            }
-            else
-              this.#handleArticles(ctx, mainRole)
+            this.#handleProgressbars(ctx, progressbars)
           }
         }
       }
@@ -122,6 +115,17 @@ class Preload {
         }
       }
     }
+  }
+
+  #handleProgressbars(ctx, progressbars) {
+    if (progressbars.length) {
+      const bar = progressbars.item(0)
+      ctx.error = accumulateTextContents(bar.querySelectorAll('span')).join(',')
+      ctx.errorAt = 'progressbar@2'
+      ctx.retryLater = true
+    }
+    else
+      this.#handleArticles(ctx, mainRole)
   }
 
   #handleReactRoot(ctx, reactRoot) {
