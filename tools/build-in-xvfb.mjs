@@ -78,7 +78,8 @@ await Promise.all(
   )
 )
 
-const config = await readPackageJson('app')
+const applicationConfig = await readPackageJson('app')
+const productConfig = await readPackageJson('.')
 const path = await downloading
 const rcedit = spawn(
   'wine64',
@@ -86,19 +87,19 @@ const rcedit = spawn(
     path,
     joinPath('app', 'dist', 'win-unpacked', 'twdl.exe'),
     '--set-file-version',
-    config.version,
+    applicationConfig.version,
     '--set-icon',
     'app/dist/.icon-ico/icon.ico',
     '--set-product-version',
-    config.version,
+    productConfig.version,
     ...Object.entries(
       {
         CompanyName: 'kei-g',
         FileDescription: 'Twitterの画像を一括ダウンロードします',
-        InternalName: config.name,
+        InternalName: productConfig.name,
         LegalCopyright: 'Copyright © 2024 kei-g',
-        OriginalFileName: `${config.name}.exe`,
-        ProductName: config.description,
+        OriginalFileName: `${productConfig.name}.exe`,
+        ProductName: productConfig.description,
       }
     ).flatMap(
       ([key, value]) => [
