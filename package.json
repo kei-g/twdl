@@ -6,7 +6,6 @@
   "description": "Twitter images downloader",
   "devDependencies": {
     "@types/node": "^20.14.11",
-    "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1"
   },
   "license": "BSD-3-Clause",
@@ -18,19 +17,17 @@
   },
   "scripts": {
     "archive": "tools/mkdir.mjs dist && cd app/dist && mv win-unpacked twdl && zip -9r ../../dist/twdl.zip twdl && mv twdl win-unpacked",
-    "build": "run-s build:icon build:app",
+    "build": "tools/run.mjs build:icon build:app",
     "build:app": "tools/build-in-xvfb.mjs",
-    "build:icon": "npm-run-all -p build:prepare-icon:* -p build:icon:*",
+    "build:icon": "tools/run.mjs build:prepare:dir build:prepare:png 'pnpm run /^build:icon:.+$/'",
     "build:icon:32": "convert app/dist/twdl.png -resize 32x32 -strip app/dist/32.png",
     "build:icon:48": "convert app/dist/twdl.png -resize 48x48 -strip app/dist/48.png",
     "build:icon:96": "convert app/dist/twdl.png -resize 96x96 -strip app/dist/96.png",
     "build:icon:256": "convert app/dist/twdl.png -resize 256x256 -strip app/dist/256.png",
-    "build:icon:ico": "tools/mkdir.mjs app/dist/.icon-ico && convert app/dist/twdl.png -resize 32x32 -strip app/dist/.icon-ico/icon.ico",
-    "build:prepare-icon:dist": "tools/mkdir.mjs app/dist",
-    "build:prepare-icon:png-from-svg": "inkscape --export-filename=app/dist/twdl.png --export-overwrite --export-type=png images/twdl.svg && sleep 1",
-    "clean": "rimraf app/dist/ dist/",
-    "download:rcedit": "test -f tools/rcedit-x64.exe || curl -Ls -o tools/rcedit-x64.exe https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe",
-    "prebuild": "run-s clean",
+    "build:icon:ico": "convert app/dist/twdl.png -define icon:auto-resize=32,16 -strip app/dist/.icon-ico/icon.ico",
+    "build:prepare:dir": "tools/mkdir.mjs app/dist/.icon-ico",
+    "build:prepare:png": "inkscape --export-filename=app/dist/twdl.png --export-overwrite --export-type=png images/twdl.svg && sleep 1",
+    "prebuild": "rimraf app/dist/ dist/",
     "start": "npm exec --workspace app -- electron index.mjs"
   },
   "version": "1.0.3",
