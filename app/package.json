@@ -2,7 +2,7 @@
   "author": "kei-g",
   "description": "Twitter images downloader",
   "devDependencies": {
-    "electron": "^31.3.0",
+    "electron": "^31.3.1",
     "electron-builder": "^25.0.2"
   },
   "main": "index.mjs",
