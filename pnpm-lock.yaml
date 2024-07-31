@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@types/node':
-        specifier: ^22.0.1
-        version: 22.0.1
+        specifier: ^22.0.2
+        version: 22.0.2
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
@@ -138,11 +138,11 @@ packages:
   '@types/node@20.14.12':
     resolution: {integrity: sha512-r7wNXakLeSsGT0H1AU863vS2wa5wBOK4bWMjZz2wj+8nBx+m5PeIn0k8AloSLpRuiwdRQZwarZqHE4FNArPuJQ==}
 
-  '@types/node@22.0.0':
-    resolution: {integrity: sha512-VT7KSYudcPOzP5Q0wfbowyNLaVR8QWUdw+088uFWwfvpY6uCWaXpqV6ieLAu9WBcnTa7H4Z5RLK8I5t2FuOcqw==}
-
   '@types/node@22.0.1':
     resolution: {integrity: sha512-RVKWL+s4ax6syie/ev3FXFIs38mke4ZsCDPBcLF2Gu6MbQXKe9Fo9iU0EPUxDB1mDVvC0vCgkV3lKa2f6xIuHg==}
+
+  '@types/node@22.0.2':
+    resolution: {integrity: sha512-yPL6DyFwY5PiMVEwymNeqUTKsDczQBJ/5T7W/46RwLU/VH+AA8aT5TZkvBviLKLbbm0hlfftEkGrNzfRk/fofQ==}
 
   '@types/plist@3.0.5':
     resolution: {integrity: sha512-E6OCaRmAe4WDmWNsL/9RMqdkkzDCY1etutkflWk4c+AcjDU07Pcz1fQwTX0TQz+Pxqn9i4L1TU3UFpjnrcDgxA==}
@@ -1557,7 +1557,7 @@ snapshots:
     dependencies:
       '@types/http-cache-semantics': 4.0.4
       '@types/keyv': 3.1.4
-      '@types/node': 20.14.12
+      '@types/node': 22.0.1
       '@types/responselike': 1.0.3
 
   '@types/debug@4.1.12':
@@ -1566,13 +1566,13 @@ snapshots:
 
   '@types/fs-extra@9.0.13':
     dependencies:
-      '@types/node': 22.0.0
+      '@types/node': 22.0.1
 
   '@types/http-cache-semantics@4.0.4': {}
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 20.14.12
+      '@types/node': 22.0.1
 
   '@types/ms@0.7.34': {}
 
@@ -1580,30 +1580,30 @@ snapshots:
     dependencies:
       undici-types: 5.26.5
 
-  '@types/node@22.0.0':
+  '@types/node@22.0.1':
     dependencies:
       undici-types: 6.11.1
 
-  '@types/node@22.0.1':
+  '@types/node@22.0.2':
     dependencies:
       undici-types: 6.11.1
 
   '@types/plist@3.0.5':
     dependencies:
-      '@types/node': 22.0.0
+      '@types/node': 22.0.1
       xmlbuilder: 15.1.1
     optional: true
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 20.14.12
+      '@types/node': 22.0.1
 
   '@types/verror@1.10.10':
     optional: true
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 22.0.0
+      '@types/node': 22.0.1
     optional: true
 
   '@xmldom/xmldom@0.8.10': {}
