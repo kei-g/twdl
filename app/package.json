@@ -3,7 +3,7 @@
   "description": "Twitter images downloader",
   "devDependencies": {
     "electron": "^32.0.2",
-    "electron-builder": "^25.0.5"
+    "electron-builder": "^25.0.6"
   },
   "main": "index.mjs",
   "name": "twdl",
