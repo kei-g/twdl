@@ -46,4 +46,5 @@
   "typescript.preferences.importModuleSpecifier": "relative",
   "typescript.preferences.importModuleSpecifierEnding": "auto",
   "typescript.preferences.quoteStyle": "single",
+  "typescript.tsdk": "./node_modules/typescript/lib",
 }
