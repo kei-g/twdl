@@ -21,8 +21,8 @@ importers:
         specifier: ^32.1.0
         version: 32.1.0
       electron-builder:
-        specifier: ^25.0.6
-        version: 25.0.6(electron-builder-squirrel-windows@24.13.3(dmg-builder@25.0.6))
+        specifier: ^25.1.0
+        version: 25.1.0(electron-builder-squirrel-windows@24.13.3(dmg-builder@25.0.6))
 
 packages:
 
@@ -510,8 +510,8 @@ packages:
   electron-builder-squirrel-windows@24.13.3:
     resolution: {integrity: sha512-oHkV0iogWfyK+ah9ZIvMDpei1m9ZRpdXcvde1wTpra2U8AFDNNpqJdnin5z+PM1GbQ5BoaKCWas2HSjtR0HwMg==}
 
-  electron-builder@25.0.6:
-    resolution: {integrity: sha512-Xd+6cbmdzPI4Z6K4rIsLAlL/o2fzxkqfm4ORHfcVG2f19U4w/82amdK30bwCp0VMak4Fs8xDilqtVdBb7knLsg==}
+  electron-builder@25.1.0:
+    resolution: {integrity: sha512-lv6eyA8oIHoLK3QKaW3UIb2fxaN3260+MHRHIIDyRmHX3UDtKm7WJSDHAiZX/PCKcHbwkk3rB4LVZz+r2XwNLA==}
     engines: {node: '>=14.0.0'}
     hasBin: true
 
@@ -2103,7 +2103,7 @@ snapshots:
       - dmg-builder
       - supports-color
 
-  electron-builder@25.0.6(electron-builder-squirrel-windows@24.13.3(dmg-builder@25.0.6)):
+  electron-builder@25.1.0(electron-builder-squirrel-windows@24.13.3(dmg-builder@25.0.6)):
     dependencies:
       app-builder-lib: 25.0.6(dmg-builder@25.0.6(electron-builder-squirrel-windows@24.13.3))(electron-builder-squirrel-windows@24.13.3(dmg-builder@25.0.6))
       builder-util: 25.0.6
