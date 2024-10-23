@@ -5,7 +5,7 @@
   },
   "description": "Twitter images downloader",
   "devDependencies": {
-    "@types/node": "^22.7.8",
+    "@types/node": "^22.7.9",
     "rimraf": "^6.0.1"
   },
   "license": "BSD-3-Clause",
