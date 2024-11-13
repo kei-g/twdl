@@ -32,7 +32,7 @@ class Application {
     this.#controls.since.value = undefined
     this.#controls.until.value = undefined
     delete this.#config.range
-    await ipcRenderer.invoke('set-config', this.#config)
+    await this.#updateConfig()
   }
 
   async #configure() {
@@ -88,6 +88,8 @@ class Application {
     this.#controls.sourceFile.addEventListener('change', this.#handleSourceChange.bind(this))
     this.#controls.beginDownload.addEventListener('click', this.#beginDownload.bind(this))
     this.#controls.cancelDownload.addEventListener('click', ipcRenderer.invoke.bind(ipcRenderer, 'message-box', 'キャンセル機能は未実装です'))
+    this.#controls.since.addEventListener('change', this.#updateRange.bind(this))
+    this.#controls.until.addEventListener('change', this.#updateRange.bind(this))
     this.#controls.selectByDateRange.addEventListener('click', this.#selectByDateRange.bind(this))
     this.#controls.clearDateRanges.addEventListener('click', this.#clearDateRanges.bind(this))
     this.#controls.configure.addEventListener('click', this.#configure.bind(this))
@@ -157,6 +159,21 @@ class Application {
       this.#controls.since.value,
       this.#controls.until.value
     )
+  }
+
+  async #updateRange(ev) {
+    const { id, value } = ev.source
+    const obj = {}
+    obj[id] = value
+    console.log(obj)
+    if (!this.#config.range)
+      this.#config.range = {}
+    this.#config.range[id] = value
+    await this.#updateConfig()
+  }
+
+  async #updateConfig() {
+    await ipcRenderer.invoke('set-config', this.#config)
   }
 
   constructor() {
