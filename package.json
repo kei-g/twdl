@@ -27,6 +27,7 @@
     "build:icon:ico": "convert app/dist/twdl.png -define icon:auto-resize=32,16 -strip app/dist/.icon-ico/icon.ico",
     "build:prepare:dir": "tools/mkdir.mjs app/dist/.icon-ico",
     "build:prepare:png": "inkscape --export-filename=app/dist/twdl.png --export-overwrite --export-type=png images/twdl.svg && sleep 1",
+    "postbuild": "sudo chown root:root app/dist/linux-unpacked/chrome-sandbox && sudo chmod 4755 app/dist/linux-unpacked/chrome-sandbox",
     "prebuild": "rimraf app/dist/ dist/",
     "start": "npm exec --workspace app -- electron index.mjs"
   },
