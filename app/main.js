@@ -162,10 +162,7 @@ class Application {
   }
 
   async #updateRange(ev) {
-    const { id, value } = ev.source
-    const obj = {}
-    obj[id] = value
-    console.log(obj)
+    const { id, value } = ev.target
     if (!this.#config.range)
       this.#config.range = {}
     this.#config.range[id] = value
