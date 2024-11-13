@@ -92,7 +92,7 @@ class Preload {
           }
           else {
             const progressbars = mainRole.querySelectorAll('div[aria-label][role="progressbar"]')
-            this.#handleProgressbars(ctx, progressbars)
+            this.#handleProgressbars(ctx, mainRole, progressbars)
           }
         }
       }
@@ -118,7 +118,7 @@ class Preload {
     }
   }
 
-  #handleProgressbars(ctx, progressbars) {
+  #handleProgressbars(ctx, mainRole, progressbars) {
     if (progressbars.length) {
       const bar = progressbars.item(0)
       ctx.error = accumulateTextContents(bar.querySelectorAll('span')).join(',')
