@@ -31,7 +31,7 @@
     "prebuild": "rimraf app/dist/ dist/",
     "start": "npm exec --workspace app -- electron index.mjs"
   },
-  "version": "1.0.3",
+  "version": "1.0.4",
   "workspaces": {
     "packages": [
       "app"
