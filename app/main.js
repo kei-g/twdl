@@ -108,11 +108,11 @@ class Application {
 
   async #load(_, url) {
     const epoch = Date.now()
-    const [initialDelay, period, timeout] = [
-      this.#controls.initialDelay,
-      this.#controls.period,
-      this.#controls.timeout,
-    ].map(control => parseInt(control.value))
+    const { initialDelay, period, timeout } = this.#config.timer ?? {
+      initialDelay: 100,
+      period: 125,
+      timeout: 5000,
+    }
     const webview = this.#controls.webview
     const task = new Promise(
       resolve => webview.addEventListener('dom-ready', resolve, { once: true })
