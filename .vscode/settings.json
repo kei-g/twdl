@@ -4,7 +4,17 @@
   "cSpell.caseSensitive": false,
   "cSpell.checkOnlyEnabledFileTypes": true,
   "cSpell.enabled": true,
-  "cSpell.words": [
+  "cSpell.ignorePaths": [
+    ".git/{index,*refs,*HEAD}",
+    ".git/{info,lfs,logs,refs,objects}/**",
+    ".vscode",
+    ".vscode-insiders",
+    "node_modules",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "vscode-extension",
+  ],
+  "cSpell.userWords": [
     "asar",
     "bento",
     "favorited",
