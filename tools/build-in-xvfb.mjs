@@ -81,6 +81,7 @@ await Promise.all(
 const applicationConfig = await readPackageJson('app')
 const productConfig = await readPackageJson('.')
 const path = await downloading
+env.PATH = `/usr/lib/wine:${env.PATH}`
 const rcedit = spawn(
   'wine64',
   [
