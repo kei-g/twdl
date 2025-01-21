@@ -54,7 +54,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
       - name: Setup node modules
         run: |
-          pnpm install
+          pnpm install --frozen-lockfile
       - name: Build
         run: |
           npm run build
