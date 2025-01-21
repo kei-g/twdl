@@ -55,7 +55,9 @@ jobs:
       - name: Setup node modules
         run: |
           pnpm install --frozen-lockfile
-      - name: Build
+      - env:
+          PATH: /usr/lib/wine:$PATH
+        name: Build
         run: |
           npm run build
       - if: ${{ github.event_name == 'push' && github.ref_name == 'main' && matrix.node == 22 }}
