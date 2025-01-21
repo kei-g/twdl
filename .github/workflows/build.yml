@@ -55,6 +55,9 @@ jobs:
       - name: Setup node modules
         run: |
           pnpm install --frozen-lockfile
+      - name: Create symbolic link
+        run: |
+          ln -s /usr/lib/wine/wine64 /usr/bin/wine64
       - name: Build
         run: |
           npm run build
